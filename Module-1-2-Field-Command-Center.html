@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F9F7F3;
+            --card-bg: #FFFFFF;
+            --text-primary: #403d39;
+            --text-secondary: #7f7b75;
+            --border-color: #E7E5E2;
+            --accent-color: #845a31;
+            --shadow: 0 8px 25px rgba(0,0,0,0.05);
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { width: 100%; max-width: 1600px; margin: 0 auto; }
+        h1, h2, h3, h4 { margin: 0; font-weight: 600; font-family: 'Roboto Mono', monospace; }
+        .card { background-color: var(--card-bg); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        
+        .main-grid { display: grid; grid-template-columns: 280px 1fr; gap: 2rem; }
+        @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .field-selector .field {
+            padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer;
+            transition: all 0.2s ease; display: flex; align-items: center; gap: 1rem;
+        }
+        .field-selector .field:hover { background-color: #f8f8f7; }
+        .field-selector .field.active { background-color: #fff; border-color: var(--accent-color); box-shadow: 0 0 0 2px var(--accent-color); }
+        .field-icon { font-size: 2rem; }
+        .field-name { font-weight: 600; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        .dashboard-col { display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .forecast-list { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
+        .forecast-day { padding: 0.5rem; border-radius: 8px; }
+        .forecast-day.hot { background-color: #fffbeb; }
+        
+        .yield-gauge-circle { position: relative; width: 200px; height: 100px; overflow: hidden; }
+        .yield-gauge-svg { width: 200px; height: 200px; transform: translateY(-100px) rotate(-90deg); }
+        .yield-gauge-bg, .yield-gauge-fg { fill: none; stroke-width: 24; }
+        .yield-gauge-bg { stroke: var(--border-color); }
+        .yield-gauge-fg { stroke: var(--accent-color); stroke-linecap: round; transition: all 0.8s ease-out; }
+        .yield-gauge-text { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); text-align: center; }
+
+        .alert-list .alert {
+            padding: 1rem; border-radius: 12px; border: 1px solid; cursor: pointer; transition: all 0.2s ease;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        .alert:hover { transform: translateY(-3px); }
+        .alert.active { box-shadow: 0 0 0 2px var(--accent-color); }
+        .alert.warning { border-color: var(--warning-color); background-color: #fffbeb; }
+        .alert.danger { border-color: var(--danger-color); background-color: #fef2f2; }
+        .alert.info { border-color: var(--info-color); background-color: #eff6ff; }
+        .alert-title { font-weight: 600; }
+        
+        .diagnostic-card { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
+
+        .soil-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1rem; }
+        .soil-metric { text-align: center; }
+        
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="mb-8">
+        <h1 class="text-3xl">Field Command Center</h1>
+        <p class="text-secondary" style="font-family:'Inter'">Operational dashboard for daily decision-making. <span id="location-display" class="font-mono text-xs p-1 bg-gray-200 rounded">📍 Loading...</span></p>
+    </header>
+
+    <div class="main-grid">
+        <aside class="field-selector space-y-4">
+            <h2 class="text-lg px-2">My Fields</h2>
+            <div id="crop-tabs" class="space-y-3">
+                <div class="field" data-crop="corn">
+                    <div class="field-icon">🌽</div>
+                    <div>
+                        <div class="field-name">Corn Field A</div>
+                        <div class="text-sm text-secondary">Stage: Vegetative</div>
+                    </div>
+                </div>
+                 <div class="field" data-crop="chile">
+                    <div class="field-icon">🌶️</div>
+                    <div>
+                        <div class="field-name">Chili Block 3</div>
+                        <div class="text-sm text-secondary">Stage: Flowering</div>
+                    </div>
+                </div>
+                 <div class="field" data-crop="cucumber">
+                    <div class="field-icon">🥒</div>
+                    <div>
+                        <div class="field-name">Cucumber Row 7</div>
+                        <div class="text-sm text-secondary">Stage: Fruiting</div>
+                    </div>
+                </div>
+            </div>
+             <button id="simulate-btn" class="w-full bg-accent-color text-white font-bold py-3 px-4 rounded-lg mt-4 hover:brightness-110 transition-all disabled:opacity-50">
+                Update Briefing
+            </button>
+        </aside>
+
+        <main class="dashboard-grid">
+            <div id="col-1" class="dashboard-col">
+                <div class="card">
+                    <h4>7-Day Forecast</h4>
+                    <div id="forecast-container" class="mt-4 forecast-list"></div>
+                </div>
+                <div class="card text-center">
+                    <h4>Yield Projection</h4>
+                    <div id="yield-container" class="mt-2"></div>
+                </div>
+            </div>
+            <div id="col-2" class="dashboard-col">
+                <div class="card">
+                    <h4>Soil & Atmosphere</h4>
+                    <div id="soil-atmosphere-container" class="mt-4"></div>
+                </div>
+                 <div class="card">
+                    <h4>Priority Alerts</h4>
+                    <div id="alerts-container" class="mt-4 space-y-3"></div>
+                </div>
+            </div>
+            <div id="col-3" class="dashboard-col">
+                <div id="diagnostic-container" class="sticky top-8"></div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+class FieldCommandApp {
+    constructor() {
+        this.state = { selectedCrop: 'corn', activeAlert: null };
+        this.modelLogic = this.getAdvancedModelLogic();
+        this.simulateBtn = document.getElementById('simulate-btn');
+        this.locationDisplay = document.getElementById('location-display');
+        this.init();
+    }
+
+    init() {
+        document.getElementById('crop-tabs').addEventListener('click', (e) => {
+            const field = e.target.closest('.field');
+            if (field) {
+                this.state.selectedCrop = field.dataset.crop;
+                this.updateActiveField();
+                this.runSimulation();
+            }
+        });
+        this.simulateBtn.addEventListener('click', () => this.runSimulation());
+        document.getElementById('col-2').addEventListener('click', (e) => {
+             const alertEl = e.target.closest('.alert');
+             if (alertEl) {
+                 this.state.activeAlert = alertEl.dataset.alertId;
+                 this.updateActiveAlert();
+             }
+        });
+        this.runSimulation();
+        this.updateActiveField();
+    }
+    
+    updateActiveField() {
+        document.querySelectorAll('.field').forEach(f => f.classList.toggle('active', f.dataset.crop === this.state.selectedCrop));
+    }
+
+    updateActiveAlert() {
+        document.querySelectorAll('.alert').forEach(a => a.classList.toggle('active', a.dataset.alertId === this.state.activeAlert));
+        const diagnosticContainer = document.getElementById('diagnostic-container');
+        const alertData = this.lastResults.alerts.find(a => a.id === this.state.activeAlert);
+        if (alertData) {
+            diagnosticContainer.innerHTML = `
+                <div class="card diagnostic-card">
+                    <h3 class="mb-4">${alertData.title}</h3>
+                    <p class="text-secondary text-sm mb-4">${alertData.reason}</p>
+                    <div class="mb-4">
+                        <h4 class="text-sm mb-2">Key Factors</h4>
+                        <ul class="text-sm list-disc pl-5 space-y-1 text-secondary">
+                            ${alertData.factors.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-sm mb-2" style="color:var(--accent-color)">Recommended Intervention</h4>
+                        <p class="text-sm text-primary font-medium">${alertData.intervention}</p>
+                    </div>
+                </div>`;
+        }
+    }
+
+    setLoading(isLoading) {
+        if (isLoading) {
+            this.simulateBtn.disabled = true;
+            this.simulateBtn.textContent = 'Updating...';
+        } else {
+            this.simulateBtn.disabled = false;
+            this.simulateBtn.textContent = 'Update Briefing';
+        }
+    }
+
+    getUserLocation() {
+        return new Promise((resolve) => {
+            if (!navigator.geolocation) {
+                console.warn("Geolocation is not supported by this browser.");
+                resolve({ lat: 23.25, lon: -106.42, name: "Mazatlan, MX (Default)" });
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const coords = { lat: position.coords.latitude, lon: position.coords.longitude };
+                    const name = await this.getCityName(coords);
+                    resolve({ ...coords, name });
+                },
+                (error) => {
+                    console.warn(`Geolocation error (${error.code}): ${error.message}`);
+                    resolve({ lat: 23.25, lon: -106.42, name: "Mazatlan, MX (Default)" });
+                }
+            );
+        });
+    }
+
+    async getCityName({ lat, lon }) {
+        try {
+            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+            const data = await response.json();
+            return `${data.city}, ${data.principalSubdivisionCode.replace('MX-','')}`;
+        } catch (e) {
+            return "Current Location";
+        }
+    }
+
+    async fetchForecast({ lat, lon }) {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,precipitation_sum,windspeed_10m_max,relative_humidity_2m_mean,et0_fao_evapotranspiration,soil_temperature_0_to_7cm_mean,soil_moisture_0_to_7cm_mean&timezone=auto`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            return data.daily.time.map((date, i) => ({
+                day: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+                temp: data.daily.temperature_2m_max[i],
+                precip: data.daily.precipitation_sum[i],
+                wind: data.daily.windspeed_10m_max[i],
+                humidity: data.daily.relative_humidity_2m_mean[i],
+                et0: data.daily.et0_fao_evapotranspiration[i],
+                soil_temp: data.daily.soil_temperature_0_to_7cm_mean[i],
+                soil_moisture: data.daily.soil_moisture_0_to_7cm_mean[i],
+            }));
+        } catch (error) {
+            console.error("Failed to fetch weather data:", error);
+            return Array.from({length: 7}, (_, i) => ({ day: 'N/A', temp: 0, precip: 0, wind: 0, humidity: 0, et0: 0, soil_temp: 0, soil_moisture: 0, error: true }));
+        }
+    }
+
+    async runSimulation() {
+        this.setLoading(true);
+        const location = await this.getUserLocation();
+        this.locationDisplay.textContent = `📍 ${location.name}`;
+        const forecast = await this.fetchForecast(location);
+        this.setLoading(false);
+
+        this.lastResults = this.modelLogic.generateBriefing(this.state.selectedCrop, forecast);
+        
+        this.renderForecast(forecast);
+        this.renderSoilAtmosphere(forecast);
+        this.renderYield(this.lastResults.yieldProjection);
+        this.renderAlerts(this.lastResults.alerts);
+        
+        if (this.lastResults.alerts.length > 0) {
+            this.state.activeAlert = this.lastResults.alerts[0].id;
+            this.updateActiveAlert();
+        } else {
+            document.getElementById('diagnostic-container').innerHTML = `<div class="card diagnostic-card text-center"><h3 class="text-lg">All Clear</h3><p class="text-secondary text-sm mt-2">No critical risks detected in the next 7 days.</p></div>`;
+        }
+    }
+
+    renderForecast(forecast) {
+        const forecastContainer = document.getElementById('forecast-container');
+        forecastContainer.innerHTML = forecast.map(d => `
+            <div class="forecast-day ${d.temp > 31 ? 'hot' : ''}">
+                <div class="font-bold text-sm">${d.day}</div>
+                <div class="text-2xl my-2">${d.error ? '❓' : d.temp > 30 ? '☀️' : d.precip > 5 ? '🌧️' : '🌤️'}</div>
+                <div class="text-sm font-mono">${d.temp.toFixed(0)}°C</div>
+                <div class="text-xs text-secondary">${d.precip.toFixed(0)}mm</div>
+            </div>
+        `).join('');
+    }
+
+    renderSoilAtmosphere(forecast) {
+        const container = document.getElementById('soil-atmosphere-container');
+        const avg_soil_temp = forecast.reduce((acc, day) => acc + day.soil_temp, 0) / forecast.length;
+        const avg_soil_moisture = forecast.reduce((acc, day) => acc + day.soil_moisture, 0) / forecast.length;
+        const avg_humidity = forecast.reduce((acc, day) => acc + day.humidity, 0) / forecast.length;
+        const total_et0 = forecast.reduce((acc, day) => acc + day.et0, 0);
+
+        container.innerHTML = `
+            <div class="soil-grid">
+                <div class="soil-metric">
+                    <div class="text-2xl font-bold font-mono">${avg_soil_temp.toFixed(1)}°C</div>
+                    <div class="text-xs text-secondary">Avg Soil Temp</div>
+                </div>
+                <div class="soil-metric">
+                    <div class="text-2xl font-bold font-mono">${(avg_soil_moisture * 100).toFixed(0)}%</div>
+                    <div class="text-xs text-secondary">Avg Soil Moisture</div>
+                </div>
+                <div class="soil-metric">
+                    <div class="text-2xl font-bold font-mono">${avg_humidity.toFixed(0)}%</div>
+                    <div class="text-xs text-secondary">Avg Humidity</div>
+                </div>
+                <div class="soil-metric">
+                    <div class="text-2xl font-bold font-mono">${total_et0.toFixed(1)}mm</div>
+                    <div class="text-xs text-secondary">Total ET₀ (7-day)</div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderYield(projection) {
+        const yieldContainer = document.getElementById('yield-container');
+        const offset = 132 * (1 - (projection.score / 100));
+        yieldContainer.innerHTML = `
+            <div class="yield-gauge-circle mx-auto">
+                <svg class="yield-gauge-svg" viewBox="0 0 100 100">
+                    <circle class="yield-gauge-bg" cx="50" cy="50" r="42" stroke-dasharray="132 264"></circle>
+                    <circle class="yield-gauge-fg" id="yield-fg" cx="50" cy="50" r="42" stroke-dasharray="132 264" stroke-dashoffset="132"></circle>
+                </svg>
+                <div class="yield-gauge-text">
+                    <div class="text-4xl font-bold font-mono">${projection.value.toFixed(1)}</div>
+                    <div class="text-sm text-secondary">${projection.unit}</div>
+                </div>
+            </div>`;
+        setTimeout(() => {
+            const fg = document.getElementById('yield-fg');
+            fg.style.strokeDashoffset = offset;
+        }, 100);
+    }
+
+    renderAlerts(alerts) {
+        const alertsContainer = document.getElementById('alerts-container');
+        if (alerts.length === 0) {
+            alertsContainer.innerHTML = `<div class="text-center text-secondary p-4">No alerts.</div>`;
+            return;
+        }
+        alertsContainer.innerHTML = alerts.map((a, i) => `
+            <div class="alert ${a.level}" data-alert-id="${a.id}" style="animation-delay: ${i * 100}ms">
+                <div class="alert-title">${a.title}</div>
+                <p class="text-sm text-secondary mt-1">${a.summary}</p>
+            </div>
+        `).join('');
+    }
+    
+    getAdvancedModelLogic() {
+        const crops = {
+            corn: { name: "Corn", unit: 'ton/ha', baseYield: 10.0, maxYield: 15.0, sensitivities: { vegetative: [0.3, 0.8, 0.7, 0.6], flowering: [0.9, 0.7, 0.3, 0.8], grain_filling: [0.6, 0.9, 0.2, 0.7] } },
+            chile: { name: "Chili", unit: 'Prod. Index', baseYield: 75, maxYield: 120, sensitivities: { vegetative: [0.8, 0.6, 0.4, 0.7], flowering: [0.7, 0.8, 0.5, 0.9], fruiting: [0.5, 0.9, 0.3, 0.8] } },
+            cucumber: { name: "Cucumber", unit: 'ton/ha', baseYield: 22.0, maxYield: 30.0, sensitivities: { vegetative: [0.7, 0.9, 0.5, 0.8], flowering: [0.8, 0.8, 0.4, 0.9], fruiting: [0.6, 1.0, 0.2, 0.8] } }
+        };
+
+        const generateBriefing = (cropKey, forecast) => {
+            const crop = crops[cropKey];
+            const alerts = [];
+            let stressImpact = 0;
+
+            const flowering_week_start = 3; 
+            const flowering_week_end = 5;
+
+            forecast.forEach((day, index) => {
+                const week = index + 1;
+                let stage = 'vegetative';
+                if (week >= flowering_week_start && week <= flowering_week_end) stage = 'flowering';
+                else if (week > flowering_week_end) stage = 'grain_filling';
+                
+                const [heat_sens, water_sens, wind_sens, disease_sens] = crop.sensitivities[stage] || crop.sensitivities.vegetative;
+
+                if (day.temp > 32 && heat_sens > 0.7) {
+                    const id = `heat_w${week}`;
+                    alerts.push({
+                        id,
+                        level: 'danger',
+                        title: `Heatwave Alert: Day ${week}`,
+                        summary: `High temperatures risk impacting ${stage} stage.`,
+                        reason: `Temperatures above 32°C during the sensitive ${stage} phase can cause pollination failure or fruit drop.`,
+                        factors: [`Forecast Temp: ${day.temp.toFixed(0)}°C`, `Stage Sensitivity: High`],
+                        intervention: 'Consider applying anti-stress biostimulants or planning for night-time irrigation to cool the plant canopy.'
+                    });
+                    stressImpact += 0.05 * heat_sens;
+                }
+                
+                if (day.et0 > day.precip + 1.5 && water_sens > 0.7) {
+                     const id = `water_w${week}`;
+                     alerts.push({
+                        id,
+                        level: 'warning',
+                        title: `Water Stress Risk: Day ${week}`,
+                        summary: `High evapotranspiration exceeds available water.`,
+                        reason: `High ET₀ rates (${day.et0.toFixed(1)}mm) are depleting soil moisture faster than precipitation (${day.precip.toFixed(1)}mm) can replenish it.`,
+                        factors: [`Forecast ET₀: ${day.et0.toFixed(1)}mm`, `Forecast Precip: ${day.precip.toFixed(1)}mm`, `Stage Sensitivity: High`],
+                        intervention: 'Prepare irrigation systems. Monitor soil moisture closely and irrigate before visible signs of wilt appear.'
+                    });
+                     stressImpact += 0.03 * water_sens;
+                }
+                
+                if (day.humidity > 80 && disease_sens > 0.7) {
+                     const id = `fungal_w${week}`;
+                     alerts.push({
+                        id,
+                        level: 'info',
+                        title: `Fungal Risk Alert: Day ${week}`,
+                        summary: `High humidity creates favorable conditions for pathogens.`,
+                        reason: `Sustained relative humidity above 80% increases the risk of fungal diseases like powdery mildew, downy mildew, and rusts.`,
+                        factors: [`Forecast Humidity: ${day.humidity.toFixed(0)}%`, `Stage Sensitivity: High`],
+                        intervention: 'Increase air circulation if possible (e.g., pruning in greenhouses). Scout for early signs of disease and prepare preventative fungicides.'
+                    });
+                     // Fungal risk doesn't directly reduce yield in this model, but is a critical alert
+                }
+            });
+            
+            const uniqueAlerts = Array.from(new Map(alerts.map(a => [a.title, a])).values()).sort((a,b) => {
+                const order = { danger: 0, warning: 1, info: 2 };
+                return order[a.level] - order[b.level];
+            });
+            
+            const finalYield = crop.baseYield * (1 - Math.min(stressImpact, 0.9)); // Cap stress impact at 90%
+            const yieldProjection = {
+                value: finalYield,
+                unit: crop.unit,
+                score: (finalYield / crop.maxYield) * 100
+            };
+            
+            return { yieldProjection, alerts: uniqueAlerts };
+        };
+
+        return { generateBriefing };
+    }
+}
+const app = new FieldCommandApp();
+</script>
+</body>
+</html>
