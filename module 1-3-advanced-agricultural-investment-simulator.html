@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Agricultural Investment Simulator</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts for better typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to enhance the UI */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+            background-image: radial-gradient(#e2e8f0 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db; /* gray-300 */
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 3px rgb(59 130 246 / 0.3);
+        }
+        .btn-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+            transform: translateY(-2px);
+        }
+        .btn-primary:disabled {
+            background-color: #94a3b8; /* slate-400 */
+            cursor: not-allowed;
+            transform: translateY(0);
+        }
+        /* Style for the sticky table header */
+        .table-container {
+            max-height: 450px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8fafc; /* slate-50 */
+            z-index: 10;
+        }
+        /* Animation for elements fading in and sliding up */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .will-animate {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .metric-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="antialiased text-slate-800">
+    <div class="container mx-auto p-4 md:p-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Input Form Card -->
+            <div class="card p-6 md:p-8 mb-8">
+                <h1 class="text-2xl md:text-3xl font-bold text-center text-slate-800 mb-2" style="font-family: 'Roboto Mono', monospace;">
+                    Investment Simulator
+                </h1>
+                <p class="text-center text-slate-500 mb-8">Advanced Analysis for Agricultural Projects</p>
+                <form id="loan-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end border-b border-slate-200 pb-6 mb-6">
+                        <h3 class="text-lg font-semibold text-slate-700 col-span-full">Loan Details</h3>
+                        <div>
+                            <label for="principal" class="block text-sm font-medium text-slate-700 mb-1">Loan Amount ($)</label>
+                            <input type="number" class="form-input" id="principal" value="500000" required>
+                        </div>
+                        <div>
+                            <label for="rate" class="block text-sm font-medium text-slate-700 mb-1">Annual Interest Rate (%)</label>
+                            <input type="number" class="form-input" id="rate" step="0.01" value="9.5" required>
+                        </div>
+                        <div>
+                            <label for="years" class="block text-sm font-medium text-slate-700 mb-1">Term (Years)</label>
+                            <input type="number" class="form-input" id="years" value="5" required>
+                        </div>
+                         <div>
+                            <label for="frequency" class="block text-sm font-medium text-slate-700 mb-1">Payment Frequency</label>
+                            <select id="frequency" class="form-input bg-white">
+                                <option value="12">Monthly</option>
+                                <option value="4">Quarterly</option>
+                                <option value="2">Semi-Annually</option>
+                                <option value="1">Annually</option>
+                            </select>
+                        </div>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                        <h3 class="text-lg font-semibold text-slate-700 col-span-full">Project Profitability Analysis</h3>
+                        <div>
+                            <label for="annualRevenue" class="block text-sm font-medium text-slate-700 mb-1">Estimated Annual Revenue ($)</label>
+                            <input type="number" class="form-input" id="annualRevenue" value="250000" required>
+                        </div>
+                        <div>
+                            <label for="discountRate" class="block text-sm font-medium text-slate-700 mb-1">Discount Rate (MARR) (%)</label>
+                            <input type="number" class="form-input" id="discountRate" step="0.01" value="12" required>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button type="submit" id="submit-button" class="btn-primary w-full flex items-center justify-center text-base">
+                            <span id="button-text">Generate Financial Analysis</span>
+                            <svg id="button-spinner" class="animate-spin h-5 w-5 ml-3 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div id="error-container" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg relative hidden mb-8 will-animate" role="alert"></div>
+
+            <div id="results-container" class="hidden">
+                <div class="card p-6 md:p-8">
+                    <div class="text-center mb-8 will-animate">
+                        <h2 class="text-3xl font-bold text-slate-800">Financial Analysis Report</h2>
+                        <p class="text-slate-500 mt-1" id="report-subtitle"></p>
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold text-slate-700 mb-4 will-animate">Loan Summary</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
+                        <div class="metric-card bg-slate-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Periodic Payment</p><p class="text-2xl font-bold text-blue-600" id="summary-payment">--</p></div>
+                        <div class="metric-card bg-slate-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Total Interest Paid</p><p class="text-2xl font-bold text-red-500" id="summary-interest">--</p></div>
+                        <div class="metric-card bg-slate-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Total Cost of Credit</p><p class="text-2xl font-bold text-slate-800" id="summary-total">--</p></div>
+                        <div class="metric-card bg-slate-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Effective Annual Rate</p><p class="text-2xl font-bold text-slate-800" id="summary-ear">--</p></div>
+                    </div>
+
+                    <h3 class="text-xl font-semibold text-slate-700 mb-4 will-animate">Investment Viability Analysis</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
+                        <div class="metric-card bg-emerald-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Net Present Value (NPV)</p><p class="text-2xl font-bold" id="summary-npv">--</p></div>
+                        <div class="metric-card bg-emerald-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Internal Rate of Return (IRR)</p><p class="text-2xl font-bold text-emerald-600" id="summary-irr">--</p></div>
+                        <div class="metric-card bg-emerald-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Payback Period</p><p class="text-2xl font-bold text-emerald-600" id="summary-payback">--</p></div>
+                        <div class="metric-card bg-emerald-50 p-4 rounded-lg will-animate"><p class="text-sm text-slate-500">Profitability Index (PI)</p><p class="text-2xl font-bold text-emerald-600" id="summary-pi">--</p></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8">
+                        <div class="lg:col-span-2 flex flex-col items-center p-4 bg-slate-50 rounded-lg will-animate">
+                            <h3 class="text-lg font-semibold text-slate-700 mb-4">Cost Breakdown</h3>
+                            <div class="w-full h-auto max-w-[300px]"><canvas id="loan-chart"></canvas></div>
+                        </div>
+                        <div class="lg:col-span-3 will-animate">
+                            <h3 class="text-lg font-semibold text-slate-700 mb-4">Amortization Schedule</h3>
+                            <div class="table-container border rounded-lg">
+                                <table class="table w-full text-sm text-left text-slate-600">
+                                    <thead class="text-xs text-slate-700 uppercase"><tr class="text-center"><th class="px-6 py-3">Period</th><th class="px-6 py-3">Payment</th><th class="px-6 py-3">Interest</th><th class="px-6 py-3">Principal</th><th class="px-6 py-3">Remaining Balance</th></tr></thead>
+                                    <tbody id="amortization-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const InvestmentSimulator = {
+            // --- DOM Element References ---
+            form: document.getElementById('loan-form'),
+            resultsContainer: document.getElementById('results-container'),
+            errorContainer: document.getElementById('error-container'),
+            submitButton: document.getElementById('submit-button'),
+            buttonText: document.getElementById('button-text'),
+            buttonSpinner: document.getElementById('button-spinner'),
+            chartCanvas: document.getElementById('loan-chart'),
+            loanChart: null,
+            formatter: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
+
+            // --- Initializer ---
+            init: function() {
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.calculateAndDisplay();
+                });
+            },
+
+            // --- Input Getter and Validator ---
+            getInputs: function() {
+                const principal = parseFloat(document.getElementById('principal').value);
+                const annualRate = parseFloat(document.getElementById('rate').value) / 100;
+                const years = parseInt(document.getElementById('years').value);
+                const paymentsPerYear = parseInt(document.getElementById('frequency').value);
+                const annualRevenue = parseFloat(document.getElementById('annualRevenue').value);
+                const discountRate = parseFloat(document.getElementById('discountRate').value) / 100;
+
+                if ([principal, annualRate, years, annualRevenue, discountRate].some(v => isNaN(v) || v < 0) || principal <= 0 || years <= 0) {
+                    throw new Error('Please enter valid, positive numbers for all fields.');
+                }
+                return { principal, annualRate, years, paymentsPerYear, annualRevenue, discountRate };
+            },
+            
+            // --- UI Helper: Animate Numbers ---
+            animateNumber: function(element, start, end, duration, isCurrency = true, isPercent = false) {
+                let startTimestamp = null;
+                const step = (timestamp) => {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const value = progress * (end - start) + start;
+                    if (isPercent) {
+                        element.textContent = `${value.toFixed(2)}%`;
+                    } else {
+                        element.textContent = isCurrency ? this.formatter.format(value) : value.toFixed(2);
+                    }
+                    if (progress < 1) window.requestAnimationFrame(step);
+                };
+                window.requestAnimationFrame(step);
+            },
+
+            // --- Core Financial Calculation Engine ---
+            runSimulation: function(inputs) {
+                const { principal, annualRate, years, paymentsPerYear } = inputs;
+                const periodicRate = annualRate / paymentsPerYear;
+                const numberOfPayments = years * paymentsPerYear;
+                const periodicPayment = this.calculatePeriodicPayment(principal, periodicRate, numberOfPayments);
+
+                let balance = principal;
+                let totalInterest = 0;
+                const schedule = [];
+                const annualLoanPayments = new Array(years).fill(0);
+
+                for (let i = 1; i <= numberOfPayments; i++) {
+                    const interestPayment = balance * periodicRate;
+                    const principalPayment = periodicPayment - interestPayment;
+                    balance -= principalPayment;
+                    totalInterest += interestPayment;
+                    
+                    const currentYear = Math.floor((i - 1) / paymentsPerYear);
+                    if (currentYear < years) annualLoanPayments[currentYear] += periodicPayment;
+                    
+                    schedule.push({
+                        period: i,
+                        payment: periodicPayment,
+                        interest: interestPayment,
+                        principal: principalPayment,
+                        balance: balance < 0.01 ? 0 : balance,
+                    });
+                }
+                
+                const effectiveAnnualRate = Math.pow(1 + periodicRate, paymentsPerYear) - 1;
+                const investmentMetrics = this.runInvestmentAnalysis(inputs, principal, annualLoanPayments);
+
+                return { schedule, totalInterest, principal, effectiveAnnualRate, investmentMetrics };
+            },
+
+            runInvestmentAnalysis: function(inputs, initialInvestment, annualLoanPayments) {
+                const { years, annualRevenue, discountRate } = inputs;
+                const cashFlows = [-initialInvestment];
+                for (let i = 0; i < years; i++) {
+                    cashFlows.push(annualRevenue - (annualLoanPayments[i] || 0));
+                }
+
+                const npv = this.calculateNPV(cashFlows, discountRate);
+                const irr = this.calculateIRR(cashFlows);
+                const paybackPeriod = this.calculatePaybackPeriod(cashFlows);
+                const profitabilityIndex = initialInvestment > 0 ? (npv + initialInvestment) / initialInvestment : 0;
+
+                return { npv, irr, paybackPeriod, profitabilityIndex };
+            },
+
+            // --- Advanced Mathematical Functions ---
+            calculatePeriodicPayment: (p, r, n) => (r === 0) ? p / n : p * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1),
+            calculateNPV: (cashFlows, rate) => cashFlows.reduce((acc, val, i) => acc + val / Math.pow(1 + rate, i), 0),
+            calculateIRR: function(cashFlows, maxIterations = 100, tolerance = 1e-7) {
+                let lowerBound = -0.99, upperBound = 1.0;
+                for (let i = 0; i < maxIterations; i++) {
+                    const midRate = (lowerBound + upperBound) / 2;
+                    if (upperBound - lowerBound < tolerance) break;
+                    const npv = this.calculateNPV(cashFlows, midRate);
+                    if (Math.abs(npv) < tolerance) return midRate;
+                    if (this.calculateNPV(cashFlows, lowerBound) * npv < 0) upperBound = midRate;
+                    else lowerBound = midRate;
+                }
+                // Try to return the best guess if it doesn't converge perfectly
+                return Math.abs(this.calculateNPV(cashFlows, (lowerBound + upperBound) / 2)) < Math.abs(this.calculateNPV(cashFlows, 0)) ? (lowerBound + upperBound) / 2 : null;
+            },
+            calculatePaybackPeriod: function(cashFlows) {
+                let cumulativeCashFlow = cashFlows[0];
+                if (cumulativeCashFlow >= 0) return 0;
+                for (let i = 1; i < cashFlows.length; i++) {
+                    const prevCumulative = cumulativeCashFlow;
+                    cumulativeCashFlow += cashFlows[i];
+                    if (cumulativeCashFlow >= 0) {
+                        return (i - 1) + (-prevCumulative / cashFlows[i]);
+                    }
+                }
+                return null;
+            },
+            
+            // --- Results Display Logic ---
+            displayResults: function(results, inputs) {
+                const { schedule, totalInterest, principal, effectiveAnnualRate, investmentMetrics } = results;
+                const periodicPayment = schedule.length > 0 ? schedule[0].payment : 0;
+                
+                document.getElementById('report-subtitle').textContent = `Analysis for a ${this.formatter.format(principal)} loan over ${inputs.years} years.`;
+                
+                this.animateNumber(document.getElementById('summary-payment'), 0, periodicPayment, 1200);
+                this.animateNumber(document.getElementById('summary-interest'), 0, totalInterest, 1200);
+                this.animateNumber(document.getElementById('summary-total'), 0, principal + totalInterest, 1200);
+                this.animateNumber(document.getElementById('summary-ear'), 0, effectiveAnnualRate * 100, 1200, false, true);
+
+                const npvEl = document.getElementById('summary-npv');
+                this.animateNumber(npvEl, 0, investmentMetrics.npv, 1200);
+                npvEl.className = `text-2xl font-bold ${investmentMetrics.npv >= 0 ? 'text-emerald-600' : 'text-red-500'}`;
+                
+                const irrEl = document.getElementById('summary-irr');
+                if (investmentMetrics.irr !== null) this.animateNumber(irrEl, 0, investmentMetrics.irr * 100, 1200, false, true);
+                else irrEl.textContent = 'N/A';
+                
+                const paybackEl = document.getElementById('summary-payback');
+                if (investmentMetrics.paybackPeriod !== null) paybackEl.textContent = `${investmentMetrics.paybackPeriod.toFixed(2)} years`;
+                else paybackEl.textContent = 'No payback';
+
+                this.animateNumber(document.getElementById('summary-pi'), 0, investmentMetrics.profitabilityIndex, 1200, false);
+                
+                let tableHtml = schedule.map(row => `
+                    <tr class="bg-white border-b hover:bg-slate-50 text-center">
+                        <td class="px-6 py-4">${row.period}</td>
+                        <td class="px-6 py-4">${this.formatter.format(row.payment)}</td>
+                        <td class="px-6 py-4 text-red-600">${this.formatter.format(row.interest)}</td>
+                        <td class="px-6 py-4 text-green-600">${this.formatter.format(row.principal)}</td>
+                        <td class="px-6 py-4 font-medium">${this.formatter.format(row.balance)}</td>
+                    </tr>`).join('');
+                document.getElementById('amortization-table').innerHTML = tableHtml;
+
+                this.updateChart(principal, totalInterest);
+                
+                this.resultsContainer.classList.remove('hidden');
+                document.querySelectorAll('.will-animate').forEach((el, index) => {
+                    el.style.animationDelay = `${index * 80}ms`;
+                    el.classList.add('fade-in-up');
+                });
+                this.resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            },
+
+            updateChart: function(principal, totalInterest) {
+                if (this.loanChart) this.loanChart.destroy();
+                const ctx = this.chartCanvas.getContext('2d');
+                this.loanChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Principal', 'Total Interest'],
+                        datasets: [{ data: [principal, totalInterest], backgroundColor: ['#3b82f6', '#ef4444'], borderColor: '#fff', borderWidth: 4 }]
+                    },
+                    options: {
+                        responsive: true, cutout: '60%',
+                        plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.label}: ${this.formatter.format(c.raw)}` } } }
+                    }
+                });
+            },
+
+            displayError: function(message) {
+                this.errorContainer.textContent = message;
+                this.errorContainer.classList.remove('hidden');
+                this.errorContainer.classList.add('fade-in-up');
+                this.resultsContainer.classList.add('hidden');
+            },
+
+            // --- Main Controller ---
+            calculateAndDisplay: function() {
+                this.toggleLoading(true);
+                this.errorContainer.classList.add('hidden');
+                
+                // Remove animation classes to allow re-triggering
+                document.querySelectorAll('.will-animate').forEach(el => el.classList.remove('fade-in-up'));
+
+                setTimeout(() => {
+                    try {
+                        const inputs = this.getInputs();
+                        const results = this.runSimulation(inputs);
+                        this.displayResults(results, inputs);
+                    } catch (error) {
+                        this.displayError(error.message);
+                    } finally {
+                        this.toggleLoading(false);
+                    }
+                }, 300); // Small delay for UX
+            },
+
+            toggleLoading: function(isLoading) {
+                this.buttonText.textContent = isLoading ? 'Calculating...' : 'Generate Financial Analysis';
+                this.buttonSpinner.classList.toggle('hidden', !isLoading);
+                this.submitButton.disabled = isLoading;
+            }
+        };
+
+        InvestmentSimulator.init();
+    </script>
+</body>
+</html>
