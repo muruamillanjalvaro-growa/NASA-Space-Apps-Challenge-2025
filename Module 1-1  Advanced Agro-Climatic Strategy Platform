@@ -1,0 +1,445 @@
+Module 1-1
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Agro-Climatic Strategy Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #F9F7F3;
+            --card-bg: #FFFFFF;
+            --text-primary: #403d39;
+            --text-secondary: #7f7b75;
+            --border-color: #E7E5E2;
+            --accent-color: #845a31; /* Earthy, warm brown */
+            --shadow: 0 8px 25px rgba(0,0,0,0.05);
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; }
+        h1, h2, h3, h4 { margin: 0; font-weight: 600; font-family: 'Roboto Mono', monospace; }
+        .card { background-color: var(--card-bg); border-radius: 16px; padding: 1.5rem; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        
+        #planner-nav { padding: 1rem; background-color: var(--card-bg); border-radius: 16px; margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        .nav-section { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .nav-section:first-child { margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+        .nav-label { font-family: 'Roboto Mono'; font-weight: 700; font-size: 1rem; min-width: 120px; }
+        .nav-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .tab {
+            font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; padding: 0.6rem 1rem; cursor: pointer; border: 1px solid var(--border-color); background-color: transparent; color: var(--text-secondary); border-radius: 9px; transition: all 0.2s ease;
+        }
+        .tab:hover { background-color: #f4f4f5; border-color: #dcd9d4; }
+        .tab.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+        #planner-dashboard { display: grid; grid-template-columns: 400px 1fr; gap: 2rem; align-items: flex-start; }
+        .results-dashboard { display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        @media (max-width: 1024px) { #planner-dashboard { grid-template-columns: 1fr; } }
+
+        .control-group { margin-bottom: 1.5rem; }
+        .control-group label { font-weight: 500; font-family: 'Roboto Mono', monospace; display: block; margin-bottom: 0.5rem; }
+        .control-group select, .control-group input { width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        .control-group input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #F0EEEB; border-radius: 5px; outline: none; padding: 0; }
+        .control-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--accent-color); border-radius: 50%; cursor: pointer; }
+        .slider-value { text-align: right; font-weight: 600; color: var(--accent-color); font-family: 'Roboto Mono'; margin-top: 0.25rem; }
+        .simulate-button {
+            background-color: var(--accent-color); color: white; border: none; border-radius: 8px; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; width: 100%; margin-top: 1rem;
+        }
+        
+        .placeholder { min-height: 400px; display: flex; justify-content: center; align-items: center; text-align: center; color: var(--text-secondary); font-size: 1.2rem; border: 2px dashed var(--border-color); border-radius: 16px; }
+        .report-header { text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+        .report-header .icon { font-size: 2.5rem; }
+
+        /* KPI & Diagnostic Styles */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+        .kpi-card { text-align: center; }
+        .kpi-value { font-size: 2rem; font-family: 'Roboto Mono'; font-weight: 700; }
+        .kpi-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .priority-score-circle { position: relative; width: 180px; height: 180px; }
+        .priority-score-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .priority-score-bg, .priority-score-fg { fill: none; stroke-width: 16; }
+        .priority-score-bg { stroke: var(--border-color); }
+        .priority-score-fg { stroke: var(--accent-color); stroke-linecap: round; transition: all 0.8s cubic-bezier(0.65, 0, 0.35, 1); }
+        .priority-score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+
+        /* Risk Assessment Chart */
+        .risk-chart-container { display: flex; flex-direction: column; gap: 1rem; }
+        .risk-bar-item { display: flex; align-items: center; gap: 1rem; }
+        .risk-bar-label { width: 120px; text-align: right; font-size: 1.2rem; font-family: 'Inter'; }
+        .risk-bar-wrapper { flex-grow: 1; background-color: #F0EEEB; border-radius: 4px; }
+        .risk-bar { height: 24px; border-radius: 4px; transition: width 0.5s ease-out; background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent); }
+        .risk-bar-value { font-weight: 700; font-family: 'Roboto Mono'; width: 50px; text-align: left; }
+        
+        /* Irrigation Chart */
+        .irrigation-chart-container { font-family: 'Roboto Mono', monospace; font-size: 12px; }
+        .irrigation-chart-container text { fill: var(--text-secondary); }
+        .irrigation-chart-container .grid-line { stroke: var(--border-color); stroke-dasharray: 2,2; }
+        .irrigation-chart-container .axis-line { stroke: var(--text-primary); }
+
+        /* NASA Card */
+        .nasa-card {
+            background-color: #eef2ff;
+            border-left: 4px solid #4f46e5;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+        .nasa-card h4 {
+            color: #312e81;
+            font-size: 0.9rem;
+        }
+        .nasa-card p {
+            font-family: 'Inter', sans-serif;
+            color: #4338ca;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-top: 0.25rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <nav id="planner-nav" class="card">
+        <div class="nav-section">
+            <div class="nav-label">Crop Focus:</div>
+            <div id="crop-tabs" class="nav-tabs">
+                <button class="tab" data-crop="corn">🌽 Corn</button>
+                <button class="tab" data-crop="chile">🌶️ Chili</button>
+                <button class="tab" data-crop="cucumber">🥒 Cucumber</button>
+            </div>
+        </div>
+        <div class="nav-section">
+            <div class="nav-label">Analysis Tool:</div>
+            <div id="tool-tabs" class="nav-tabs">
+                <button class="tab" data-tool="yield">Yield Simulator</button>
+                <button class="tab" data-tool="irrigation">Irrigation Planner</button>
+                <button class="tab" data-tool="risk">Risk Assessment</button>
+                <button class="tab" data-tool="economic">Economic Briefing</button>
+            </div>
+        </div>
+        <div class="nasa-card">
+            <h4>NASA Space Apps Challenge</h4>
+            <p>Decision tools powered by NASA Earth observation data.</p>
+        </div>
+    </nav>
+    
+    <main id="planner-dashboard">
+        <aside class="simulation-controls card">
+             <div class="card-header"><h2 id="tool-title"></h2></div>
+             <div id="simulator-inputs"></div>
+        </aside>
+        <section id="report-output" class="results-dashboard card">
+             <div class="placeholder">Select a crop and analysis tool to begin.</div>
+        </section>
+    </main>
+</div>
+
+<script>
+class PlannerApp {
+    constructor() {
+        this.state = { selectedCrop: 'corn', selectedTool: 'yield' };
+        this.modelLogic = this.getAdvancedModelLogic();
+        this.init();
+    }
+
+    init() {
+        document.getElementById('crop-tabs').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') { this.state.selectedCrop = e.target.dataset.crop; this.updateUI(); }
+        });
+        document.getElementById('tool-tabs').addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') { this.state.selectedTool = e.target.dataset.tool; this.updateUI(); }
+        });
+        this.updateUI();
+    }
+    
+    updateUI() {
+        document.querySelectorAll('#crop-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.crop === this.state.selectedCrop));
+        document.querySelectorAll('#tool-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tool === this.state.selectedTool));
+        
+        const toolConfig = this.modelLogic.tools[this.state.selectedTool];
+        const cropConfig = this.modelLogic.crops[this.state.selectedCrop];
+
+        document.getElementById('tool-title').textContent = toolConfig.title;
+        const inputsContainer = document.getElementById('simulator-inputs');
+        inputsContainer.innerHTML = toolConfig.renderInputs(cropConfig);
+        
+        const attachListeners = (container, slidersConfig, formatter) => {
+            slidersConfig.forEach(s_config => {
+                const sliderEl = container.querySelector(`#${s_config.id}`);
+                const displayEl = container.querySelector(`#${s_config.id}-value`);
+                if (sliderEl && displayEl) {
+                    sliderEl.addEventListener('input', (e) => {
+                        displayEl.textContent = formatter(e.target);
+                    });
+                }
+            });
+        };
+
+        if (this.state.selectedTool === 'yield') {
+            attachListeners(inputsContainer, cropConfig.sliders, (target) => {
+                const sliderConf = cropConfig.sliders.find(s => s.id === target.id);
+                return sliderConf.format(parseFloat(target.value));
+            });
+        } else {
+             inputsContainer.querySelectorAll('input[type="range"]').forEach(slider => {
+                slider.addEventListener('input', (e) => { this.updateSliderValue(e.target); });
+                this.updateSliderValue(slider);
+            });
+        }
+
+        inputsContainer.querySelector('.simulate-button').addEventListener('click', () => {
+            const inputs = this.getInputs();
+            const results = toolConfig.runSimulation(inputs, this.modelLogic);
+            this.renderReport(results);
+        });
+        this.renderReport(null);
+    }
+    
+    updateSliderValue(slider) { const display=document.getElementById(`${slider.id}-value`); if(!display)return; let format=display.dataset.format; let value=slider.value; if(slider.id==='volatility'||slider.id==='intensity')format=['Low','Medium','High'][value]; if(slider.id==='winter')format=['Mild','Cool','Normal','Harsh','Severe'][value]; if(slider.id==='stage')format=['Establishment','Vegetative','Flowering','Maturity'][value]; display.textContent=format.replace('{value}',value); }
+    getInputs() { const i={}; document.querySelectorAll('#simulator-inputs [id]').forEach(el=>{if(el.type==='checkbox')i[el.id]=el.checked; else if(el.tagName==='SELECT')i[el.id]=el.value; else if(el.tagName==='INPUT')i[el.id]=parseFloat(el.value);}); return i; }
+    renderReport(data) { const c=document.getElementById('report-output'); if(!data){c.innerHTML=`<div class="placeholder">Adjust controls and press the button to generate a report.</div>`; return;} const t=this.modelLogic.tools[this.state.selectedTool]; c.innerHTML=t.renderReport(data); }
+
+    getAdvancedModelLogic() {
+        const cropConfigs = {
+            corn: {
+                name: "Corn",
+                logic: {
+                    calculate: function(inputs) {
+                        let archetype = 'Stable';
+                        if (inputs.stability >= 1 && inputs.wind_stability >= 1 && inputs.water >= 20 && inputs.heat_stress <= 0) archetype = 'Prime';
+                        else if (inputs.heat_stress >= 2 || inputs.stability <= -2) archetype = 'Catastrophic';
+                        else if (inputs.water <= -20 || inputs.stability <= -1) archetype = 'Adverse';
+                        const factors = { 'Climate Archetype': { value: { 'Prime': 1.20, 'Stable': 1.0, 'Adverse': 0.80, 'Catastrophic': 0.60 }[archetype], isMultiplier: true }, 'Wind Physiology': { value: 1 + [-0.08, -0.04, 0, 0.05, 0.08][inputs.wind_stability + 2], isMultiplier: true }, 'Water Supply': { value: 1 + (inputs.water / 100) * 0.7, isMultiplier: true }, 'Heat Shock': { value: 1 + [0.05, 0, 0, -0.15, -0.35][inputs.heat_stress + 2], isMultiplier: true } };
+                        let finalValue = 10.0;
+                        for (const key in factors) { finalValue *= factors[key].value; }
+                        const score = (finalValue / 15) * 100;
+                        return { finalValue, baseValue: 10.0, score, factors, archetype, unit: 'ton/ha' };
+                    },
+                    getRecommendation: ({archetype}) => {
+                        if (archetype === 'Prime') return { title: 'Prime Scenario Identified', intervention: 'Protect high-yield potential with enhanced pest and disease monitoring.', strategy: 'Consider this region a low-risk candidate for high-value seed investment.' };
+                        if (archetype === 'Catastrophic') return { title: 'Critical Risk Scenario', intervention: 'Mitigate damage with emergency irrigation (for heat) or biostimulants (for stress).', strategy: 'Re-evaluate crop suitability for the area or invest in resilience infrastructure (e.g., windbreaks, irrigation).' };
+                        return { title: 'Challenging Scenario', intervention: 'Address the primary limiting factor with precision agriculture techniques.', strategy: 'Focus on improving soil health and water retention to buffer against climate variability.' };
+                    }
+                },
+                sliders: [ { id: 'stability', label: 'Climate Stability (Veg.)', min: -2, max: 2, step: 1, value: 0, format: (v) => ['Very Unstable', 'Unstable', 'Normal', 'Stable', 'Very Stable'][v+2] }, { id: 'wind_stability', label: 'Wind Profile Stability', min: -2, max: 2, step: 1, value: 0, format: (v) => ['High Gusts', 'Variable', 'Normal', 'Stable', 'Very Stable'][v+2] }, { id: 'water', label: 'Water Availability', min: -40, max: 40, step: 20, value: 0, format: (v) => `${v}% vs Avg.`}, { id: 'heat_stress', label: 'Heat Stress (Flowering)', min: -2, max: 2, step: 1, value: 0, format: (v) => ['Low', 'Slight', 'Normal', 'High', 'Extreme'][v+2]}, ],
+                kc: [0.3, 1.2, 1.15, 0.6],
+                base_risk: 1.0
+            },
+            chile: {
+                name: "Chili",
+                logic: {
+                    calculate: function(inputs) {
+                        let narrative = 'Standard';
+                        let narrativeBonus = 0;
+                        if (inputs.spring_heat > 1 && inputs.summer_rain > 25) { narrative = 'Successful Synergy'; narrativeBonus = 25; } 
+                        else if (inputs.spring_heat < -1) { narrative = 'Slow Start'; narrativeBonus = -20; } 
+                        else if (inputs.summer_rain < -25 && inputs.spring_heat > 0) { narrative = 'Summer Water Stress'; narrativeBonus = -25; }
+                        const factors = { 'Climatic Narrative': { value: narrativeBonus, isMultiplier: false }, 'Luminosity Effect': { value: (inputs.luminosity / 15) * 15, isMultiplier: false }};
+                        let finalValue = 75 + factors['Climatic Narrative'].value + factors['Luminosity Effect'].value;
+                        const score = (finalValue / 120) * 100;
+                        return { finalValue, baseValue: 75, score, factors, narrative, unit: 'Prod. Index' };
+                    },
+                    getRecommendation: ({narrative}) => {
+                        if (narrative === 'Successful Synergy') return { title: 'High-Success Narrative Detected', intervention: 'Ensure potassium-rich fertilization to support high fruit load. Monitor for fungal risks due to moisture.', strategy: 'This climate pattern is ideal. Identify and map these zones for future expansion.' };
+                        if (narrative === 'Slow Start') return { title: 'Delayed Growth Narrative', intervention: 'Use plastic mulching to increase soil temperature and accelerate early growth.', strategy: 'Invest in greenhouses or high-tunnels to control early-season conditions.' };
+                        return { title: 'Summer Stress Narrative', intervention: 'Implement drip irrigation and moisture monitoring to maximize water use efficiency.', strategy: 'Prioritize investment in water capture and storage infrastructure.' };
+                    }
+                },
+                sliders: [ { id: 'spring_heat', label: 'Heat Anomaly (Spring)', min: -3, max: 3, step: 1, value: 0, format: (v) => `${v > 0 ? '+' : ''}${v}°C vs Avg.` }, { id: 'summer_rain', label: 'Summer Rainfall', min: -50, max: 50, step: 25, value: 0, format: (v) => `${v}% vs Avg.` }, { id: 'luminosity', label: 'Seasonal Luminosity (PAR)', min: -15, max: 15, step: 5, value: 0, format: (v) => `${v}% vs Avg.` }, ],
+                kc: [0.4, 1.05, 0.9, 0.8],
+                base_risk: 1.2
+            },
+            cucumber: {
+                name: "Cucumber",
+                logic: {
+                    calculate: function(inputs) {
+                        const factors = { 'Causal Index (Winter)': { value: Math.max(0, Math.min(10, 10 - Math.max(0, -inputs.winter_chill) * 2.5)), isMultiplier: false }, 'Archetype Fit (Summer)': { value: Math.max(0, Math.min(10, 5 + inputs.summer_heat * 1.5)), isMultiplier: false }, 'Resource Index': { value: Math.max(0, Math.min(10, 5 + (inputs.resource_avail / 10) * 2.5)), isMultiplier: false } };
+                        let potentialYield = 22.0 * (factors['Causal Index (Winter)'].value / 10);
+                        let summerMultiplier = 1 + ((factors['Archetype Fit (Summer)'].value - 5) / 10) * 0.25;
+                        let resourceMultiplier = 1 + ((factors['Resource Index'].value - 5) / 10) * 0.15;
+                        let finalValue = potentialYield * summerMultiplier * resourceMultiplier;
+                        const score = (finalValue / 30) * 100;
+                        return { finalValue, baseValue: 22.0, score, factors, unit: 'ton/ha' };
+                    },
+                    getRecommendation: ({factors}) => {
+                        if (factors['Causal Index (Winter)'].value < 6) return { title: 'Causal Bottleneck Identified', intervention: 'Early crop protection is critical. Use row covers or tunnels to mitigate cold damage.', strategy: 'Shift planting dates or select cold-hardy varieties.' };
+                        if (factors['Archetype Fit (Summer)'].value > 8) return { title: 'High-Performance Profile Match', intervention: 'Ensure adequate pollination and consistent harvesting to capitalize on ideal conditions.', strategy: 'This area shows high potential; focus on supply chain and market access.' };
+                        return { title: 'Standard Performance Profile', intervention: 'Maintain steady water and nutrient supply during peak summer demand.', strategy: 'Implement precision agriculture to optimize resource use.' };
+                    }
+                },
+                sliders: [ { id: 'winter_chill', label: 'Winter Conditions', min: -3, max: 3, step: 1, value: 0, format: (v) => v === 0 ? 'Normal' : `${v > 0 ? 'Milder' : 'Colder'}` }, { id: 'summer_heat', label: 'Thermal Profile (Summer)', min: -3, max: 3, step: 1, value: 0, format: (v) => v === 0 ? 'Normal Peak' : `Peak ${v > 0 ? 'Hotter' : 'Cooler'}` }, { id: 'resource_avail', label: 'Resource Availability', min: -20, max: 20, step: 10, value: 0, format: (v) => `${v}% vs Avg.` }, ],
+                kc: [0.6, 1.1, 1.0, 0.75],
+                base_risk: 0.9
+            }
+        };
+
+        const mapScenarioToProducerInputs = (i) => {
+            const tempEffectOnWater = 1 - (i.temp * 0.1);
+            return { 
+                stability: i.volatility, wind_stability: i.volatility, 
+                water: i.precip * tempEffectOnWater, 
+                heat_stress: Math.round(i.temp / 1.5) + (i.volatility > 1 ? 1 : 0), 
+                spring_heat: i.temp, summer_rain: i.precip, 
+                luminosity: 10 - (i.precip / 10) + (i.temp * 2), 
+                winter_chill: i.winter-2, summer_heat: i.temp, 
+                resource_avail: i.precip 
+            };
+        }
+        
+        const scenarioInputsHTML = `
+            <div class="control-group"><label>Temp. Anomaly</label><input type="range" id="temp" min="0" max="4" step="0.5" value="2"><div class="slider-value" id="temp-value" data-format="+{value}°C">+2.0°C</div></div>
+            <div class="control-group"><label>Precip. Anomaly</label><input type="range" id="precip" min="-50" max="10" step="5" value="-15"><div class="slider-value" id="precip-value" data-format="{value}%">-15%</div></div>
+            <div class="control-group"><label>Climate Volatility</label><input type="range" id="volatility" min="0" max="2" step="1" value="1"><div class="slider-value" id="volatility-value" data-format="Medium">Medium</div></div>
+            <div class="control-group"><label>Winter Severity</label><input type="range" id="winter" min="0" max="4" step="1" value="2"><div class="slider-value" id="winter-value" data-format="Normal">Normal</div></div>`;
+
+        const yieldTool = {
+            title: "Yield Simulator",
+            renderInputs: (cropConfig) => {
+                const slidersHTML = cropConfig.sliders.map(s => `
+                    <div class="control-group">
+                        <label>${s.label}</label>
+                        <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}">
+                        <div class="slider-value" id="${s.id}-value">${s.format(s.value)}</div>
+                    </div>`).join('');
+                return `${slidersHTML}<button class="simulate-button">Simulate Yield</button>`;
+            },
+            runSimulation: (inputs, modelLogic) => modelLogic.crops[this.state.selectedCrop].logic.calculate(inputs),
+            renderReport: (data) => {
+                const scoreColor = data.score < 40 ? '#F87171' : data.score < 75 ? '#FBBF24' : '#4ADE80';
+                const displayScore = data.finalValue.toFixed(1);
+                const recommendation = this.modelLogic.crops[this.state.selectedCrop].logic.getRecommendation(data);
+                const factorsHtml = Object.entries(data.factors).map(([label, d]) => {
+                    let displayValue, valueClass;
+                    let baseValue = d.isMultiplier ? 1 : (label.includes('Index') ? 5 : 0);
+                    if (typeof d.value === 'number') {
+                        valueClass = d.value > baseValue ? 'text-green-600' : d.value < baseValue ? 'text-red-600' : 'text-text-primary';
+                        displayValue = d.isMultiplier ? `${((d.value - 1) * 100).toFixed(0)}%` : d.value.toFixed(1);
+                    } else { valueClass = 'text-text-primary'; displayValue = d.value; }
+                    return `<div class="flex justify-between items-center py-2.5 border-b border-border-color last:border-b-0"><span class="text-text-secondary text-sm">${label}</span><span class="font-mono font-semibold text-sm ${valueClass}">${displayValue}</span></div>`;
+                }).join('');
+                const diagnosisTitle = data.archetype ? `Identified Archetype: <strong style="color:var(--accent-color)">${data.archetype}</strong>` : data.narrative ? `Identified Narrative: <strong style="color:var(--accent-color)">${data.narrative}</strong>` : "Model Diagnosis";
+                const reportEl = document.getElementById('report-output');
+                if (reportEl) {
+                    const fg = reportEl.querySelector('#score-fg');
+                    if (fg) {
+                        const offset = 264 * (1 - (data.score / 100));
+                        setTimeout(() => { fg.style.strokeDashoffset = offset; fg.style.stroke = scoreColor; }, 100);
+                    }
+                }
+                return `<div class="text-center"><h3 class="text-lg font-semibold text-text-primary">Predicted Outcome</h3>
+                    <div class="priority-score-circle mx-auto my-3">
+                        <svg class="priority-score-svg" viewBox="0 0 100 100"><circle class="priority-score-bg" cx="50" cy="50" r="42"></circle><circle class="priority-score-fg" id="score-fg" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle></svg>
+                        <div class="priority-score-text"><div class="text-4xl font-bold font-mono text-text-primary">${displayScore}</div><div class="text-sm text-text-secondary">${data.unit}</div></div>
+                    </div>
+                    <div class="font-semibold text-lg" style="color: ${scoreColor};">${data.score < 40 ? 'Low Potential' : data.score < 75 ? 'Moderate Potential' : 'High Potential'}</div>
+                </div>
+                <div style="margin-top: 1.5rem;"><h3 class="text-lg font-semibold text-text-primary mb-2">${diagnosisTitle}</h3><div class="space-y-1">${factorsHtml}</div></div>
+                <div style="margin-top: 1.5rem;">
+                    <h3 class="text-lg font-semibold text-text-primary mb-2">Strategic Recommendations</h3>
+                    <div style="font-family:'Inter', sans-serif; font-size:0.9rem; line-height:1.6;">
+                        <p><strong>${recommendation.title}:</strong></p>
+                        <p style="margin-top:0.5rem;"><strong style="color:var(--accent-color)">Intervention:</strong> ${recommendation.intervention}</p>
+                        <p style="margin-top:0.5rem;"><strong style="color:var(--accent-color)">Strategy:</strong> ${recommendation.strategy}</p>
+                    </div>
+                </div>`;
+            }
+        };
+
+        const riskTool = {
+            title: "Cross-Crop Risk Assessment",
+            renderInputs: () => `${scenarioInputsHTML}<button class="simulate-button">Assess Risk</button>`,
+            runSimulation: (inputs, modelLogic) => {
+                const producerInputs = mapScenarioToProducerInputs(inputs);
+                const results = Object.entries(modelLogic.crops).map(([cropKey, cropConfig]) => {
+                    const { finalValue, baseValue } = cropConfig.logic.calculate(producerInputs);
+                    const yieldDelta = (finalValue - baseValue) / baseValue;
+                    const riskScore = Math.min(100, Math.max(0, (yieldDelta * -100) * cropConfig.base_risk));
+                    return { name: cropConfig.name, risk: riskScore };
+                }).sort((a,b) => b.risk - a.risk);
+                return { crops: results };
+            },
+            renderReport: (data) => {
+                const maxRisk = Math.max(1, ...data.crops.map(c => c.risk));
+                const chartHtml = data.crops.map(c => {
+                    const barWidth = (c.risk / maxRisk) * 100;
+                    const barColor = `hsl(0, 80%, ${Math.max(30, 100 - c.risk/1.5)}%)`;
+                    return `<div class="risk-bar-item"><div class="risk-bar-label">${c.name}</div><div class="risk-bar-wrapper"><div class="risk-bar" style="width: ${barWidth}%; background-color: ${barColor};"></div></div><div class="risk-bar-value" style="color:${barColor};">${c.risk.toFixed(1)}</div></div>`
+                }).join('');
+                return `<div class="report-header"><div class="icon">⚠️</div><h2>Cross-Crop Risk Report</h2><p style="font-family: 'Inter', sans-serif; color: var(--text-secondary); margin-top: 0.5rem;">Compares the vulnerability of each crop to the given climate scenario.</p></div><div class="risk-chart-container">${chartHtml}</div>`;
+            }
+        };
+
+        const economicTool = {
+            title: "Economic Impact Briefing",
+            renderInputs: () => `${scenarioInputsHTML}<button class="simulate-button">Generate Briefing</button>`,
+            runSimulation: (inputs, modelLogic) => {
+                const cropLogic = modelLogic.crops[this.state.selectedCrop].logic;
+                const producerInputs = mapScenarioToProducerInputs(inputs);
+                const { finalValue, baseValue } = cropLogic.calculate(producerInputs);
+                const productionDelta = (finalValue - baseValue) / baseValue;
+                const supplyShock = Math.min(10, Math.max(0, (-productionDelta - 0.05) * 40));
+                const priceVolatility = supplyShock * 0.7 + Math.abs(productionDelta) * 20;
+                const inflationaryPressure = priceVolatility * (this.state.selectedCrop === 'corn' ? 1.2 : 0.6);
+                let briefing = "The projected climate scenario indicates a stable production outlook with minimal economic disruption.";
+                if(productionDelta < -0.15) briefing = `A significant <strong>${(-productionDelta * 100).toFixed(0)}% drop</strong> in production is forecast, creating a major supply shock...`;
+                else if (productionDelta < -0.05) briefing = `A minor production deficit of <strong>${(-productionDelta * 100).toFixed(0)}%</strong> is expected...`;
+                else if (productionDelta > 0.1) briefing = `An expected production surplus of <strong>${(productionDelta * 100).toFixed(0)}%</strong> will likely lead to price stabilization...`;
+                return { productionDelta: productionDelta * 100, supplyShock, priceVolatility, inflationaryPressure, briefing };
+            },
+            renderReport: (data) => {
+                 const getColor = (val) => val > 7 ? '#C23B22' : val > 4 ? '#D97706' : '#15803d';
+                return `<div class="report-header"><div class="icon">📈</div><h2>Economic Impact Briefing</h2></div>
+                <div class="kpi-grid">
+                    <div class="kpi-card"><div class="kpi-value" style="color: ${data.productionDelta < -5 ? '#C23B22' : '#15803d'}">${data.productionDelta.toFixed(1)}%</div><div class="kpi-label">Production Delta</div></div>
+                    <div class="kpi-card"><div class="kpi-value" style="color: ${getColor(data.supplyShock)}">${data.supplyShock.toFixed(1)}</div><div class="kpi-label">Supply Shock Index</div></div>
+                    <div class="kpi-card"><div class="kpi-value" style="color: ${getColor(data.priceVolatility)}">${data.priceVolatility.toFixed(1)}</div><div class="kpi-label">Price Volatility Index</div></div>
+                    <div class="kpi-card"><div class="kpi-value" style="color: ${getColor(data.inflationaryPressure)}">${data.inflationaryPressure.toFixed(1)}</div><div class="kpi-label">Inflationary Pressure</div></div>
+                </div>
+                <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                    <h4 style="margin-bottom: 0.5rem;">Policy Maker's Summary</h4>
+                    <p style="font-family: 'Inter', sans-serif; color: var(--text-secondary); line-height: 1.6;">${data.briefing}</p>
+                </div>`;
+            }
+        };
+
+        const irrigationTool = {
+            title: "Irrigation Planner",
+            renderInputs: () => `<div class="control-group"><label>Avg. Weekly Temp</label><input type="range" id="temp" min="15" max="35" step="1" value="28"><div class="slider-value" id="temp-value" data-format="{value}°C">28°C</div></div><div class="control-group"><label>Avg. Weekly Precip.</label><input type="range" id="precip" min="0" max="50" step="5" value="10"><div class="slider-value" id="precip-value" data-format="{value} mm">10 mm</div></div><div class="control-group"><label>Starting Crop Stage</label><input type="range" id="stage" min="0" max="3" step="1" value="1"><div class="slider-value" id="stage-value" data-format="Vegetative">Vegetative</div></div><button class="simulate-button">Generate Irrigation Plan</button>`,
+            runSimulation: (inputs, modelLogic) => {
+                const cropLogic = modelLogic.crops[this.state.selectedCrop];
+                const weeklyData = []; let cumulativeDeficit = 0; const baseET0 = 25;
+                for(let i=0; i<8; i++) {
+                    const currentStageIndex = Math.min(3, inputs.stage + Math.floor(i/2));
+                    const kc = cropLogic.kc[currentStageIndex];
+                    const et_c = (inputs.temp / 20) * baseET0 * kc;
+                    cumulativeDeficit += Math.max(0, et_c - inputs.precip);
+                    weeklyData.push({ week: i + 1, precip: inputs.precip, et_c, deficit: cumulativeDeficit });
+                }
+                return { weeklyData, totalDeficit: cumulativeDeficit };
+            },
+            renderReport: (data) => {
+                const chartHeight = 250, chartWidth = 550; const maxVal = Math.max(1, ...data.weeklyData.flatMap(d => [d.precip, d.et_c])); const maxDeficit = Math.max(1, ...data.weeklyData.map(d => d.deficit)); const yScale = (val) => chartHeight - (val / maxVal * (chartHeight - 40)); const yDeficitScale = (val) => chartHeight - (val / maxDeficit * (chartHeight - 40)); const bars = data.weeklyData.map((d, i) => `<g><rect x="${50 + i * 60}" y="${yScale(d.et_c)}" width="20" height="${chartHeight-yScale(d.et_c)}" fill="#FBBF24" /><rect x="${50 + i * 60 + 22}" y="${yScale(d.precip)}" width="20" height="${chartHeight-yScale(d.precip)}" fill="#3B82F6" /></g>`).join(''); const deficitPath = data.weeklyData.map((d, i) => `${50 + i * 60 + 21},${yDeficitScale(d.deficit)}`).join(' '); 
+                return `<div class="report-header"><div class="icon">💧</div><h2>8-Week Irrigation Forecast</h2></div><div class="irrigation-chart-container"><svg width="100%" viewBox="0 0 ${chartWidth + 50} ${chartHeight + 40}"><g transform="translate(40, 20)">${[0.25, 0.5, 0.75, 1].map(r => `<line class="grid-line" x1="0" x2="${chartWidth}" y1="${yScale(maxVal*r)}" y2="${yScale(maxVal*r)}"></line>`).join('')}<line class="axis-line" x1="0" x2="0" y1="0" y2="${chartHeight}"></line><line class="axis-line" x1="0" x2="${chartWidth}" y1="${chartHeight}" y2="${chartHeight}"></line>${bars}<polyline points="${deficitPath}" fill="none" stroke="#EF4444" stroke-width="3"/>${data.weeklyData.map((d, i) => `<text x="${50 + i * 60 + 10}" y="${chartHeight + 20}" text-anchor="middle">W${d.week}</text>`).join('')}<text x="-10" y="${yScale(maxVal)}" alignment-baseline="middle" text-anchor="end">${maxVal.toFixed(0)}</text><text x="-10" y="${chartHeight}" alignment-baseline="baseline" text-anchor="end">0</text><text x="-30" y="${chartHeight/2}" transform="rotate(-90, -30, ${chartHeight/2})" text-anchor="middle">mm/week</text></g></svg></div><div style="margin-top: 1rem; text-align:center; display:flex; justify-content:center; gap: 2rem;"><div><span style="color:#FBBF24">■</span> ETc</div><div><span style="color:#3B82F6">■</span> Precip.</div><div><span style="color:#EF4444">●</span> Cum. Deficit</div></div><div style="margin-top: 1.5rem; text-align:center; font-size: 1.2rem;">Total Irrigation Need: <strong style="color:var(--accent-color);">${data.totalDeficit.toFixed(1)} mm</strong></div>`;
+            }
+        };
+        
+        const tools = { yield: yieldTool, irrigation: irrigationTool, risk: riskTool, economic: economicTool };
+        return {
+            crops: cropConfigs,
+            tools: tools
+        };
+    }
+}
+const app = new PlannerApp();
+</script>
+</body>
+</html>
+
