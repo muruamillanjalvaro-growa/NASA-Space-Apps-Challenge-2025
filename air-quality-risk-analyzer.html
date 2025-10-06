@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbanClimate Pro: Air Module</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --primary-color: #3498db;
+            --secondary-color: #e74c3c;
+            --success-color: #2ecc71;
+            --shadow-light: 0 6px 18px rgba(0, 0, 0, 0.08);
+            --border-radius: 16px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 950px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .header {
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+
+        .main-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            padding: 3rem;
+            animation: slideInUp 1s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.75rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        .variable-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .variable-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            border: 1px solid #e0e6ed;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .variable-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .variable-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .variable-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            border-radius: 4px;
+            transition: opacity .2s;
+        }
+        .slider:hover {
+            opacity: 1;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid var(--card-bg);
+            transition: transform 0.2s ease;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .result-container {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        .result-container h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+        }
+
+        .risk-score {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        .risk-level {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .risk-low { color: var(--success-color); }
+        .risk-medium { color: #f1c40f; }
+        .risk-high { color: var(--secondary-color); }
+
+        .analysis-section {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        .analysis-section h4 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .analysis-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .analysis-section li {
+            background: #e0eaf3;
+            padding: 1.5rem;
+            border-radius: 12px;
+            position: relative;
+        }
+        .analysis-section li strong {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .actions-section {
+            margin-top: 3rem;
+        }
+        .actions-section h2 {
+            text-align: center;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        .actions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .actions-list li {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .actions-list li:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .actions-list h4 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        .actions-list p {
+            color: #555;
+            margin: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>UrbanClimate Pro: Air Module 🌬️</h1>
+            <p>Air Quality Risk Analysis for Smart Urban Planning</p>
+        </div>
+
+        <div class="main-card">
+            <h2 class="section-title">Risk Parameters</h2>
+            <p style="margin-top: -1rem; color: #555;">Adjust the parameters to assess the risk level of pollutant concentration. The results update in real-time.</p>
+
+            <div class="variable-group">
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Minimum Wind (WS10M_MIN)</span>
+                        <span id="wind-value" class="variable-value">5 km/h</span>
+                    </div>
+                    <input type="range" min="0" max="20" value="5" class="slider" id="wind-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">Low values increase the risk of pollution accumulation.</p>
+                </div>
+                
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Maximum Temperature (T2M_MAX)</span>
+                        <span id="temp-value" class="variable-value">25°C</span>
+                    </div>
+                    <input type="range" min="0" max="45" value="25" class="slider" id="temp-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">High temperatures can accelerate the formation of pollutants, such as ozone.</p>
+                </div>
+                
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Soil Moisture (GWETTOP)</span>
+                        <span id="humidity-value" class="variable-value">50%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="50" class="slider" id="humidity-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">Dry soils are characteristic of urbanized areas with high industrial concentration.</p>
+                </div>
+            </div>
+
+            <div class="result-container">
+                <h3>Air Quality Risk Level</h3>
+                <p id="risk-level" class="risk-score risk-low">Low</p>
+            </div>
+        </div>
+
+        <div class="actions-section" id="actions-section">
+            <h2 class="section-title">Recommended Actions</h2>
+            <ul class="actions-list">
+                </ul>
+        </div>
+        <div class="analysis-section">
+            <h2 class="section-title">Model Rule Analysis</h2>
+            <p>This index combines industrial and climatic risk factors. Below are the technical rules derived from the model for each variable.</p>
+            <ul>
+                <li>
+                    <strong>WS10M_MIN: The Dispersion Factor.</strong> The <strong>minimum wind speed at 10 meters</strong> is the most dominant factor. A low value indicates that winds are null or very slow, which prevents the dispersion of industrial pollution. The model considers it a <strong>high-risk indicator</strong>.
+                </li>
+                <li>
+                    <strong>T2M_MAX: The "Heat Island" Effect.</strong> The <strong>maximum air temperature at 2 meters</strong> is a key factor. Urban and industrial zones tend to be hotter, and heat can accelerate chemical reactions that form pollutants like ozone. A high temperature value is a <strong>high-risk indicator</strong>.
+                </li>
+                <li>
+                    <strong>GWETTOP: The Terrain Logic.</strong> The <strong>moisture in the top layer of soil</strong> is a very interesting variable. A low GWETTOP value means the soil is dry, a characteristic of areas with a lot of concrete and asphalt (impermeable) and little vegetation, which is where industry is concentrated. A low GWETTOP is a <strong>high-risk indicator</strong>.
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const windSlider = document.getElementById('wind-slider');
+        const tempSlider = document.getElementById('temp-slider');
+        const humiditySlider = document.getElementById('humidity-slider');
+        
+        const windValue = document.getElementById('wind-value');
+        const tempValue = document.getElementById('temp-value');
+        const humidityValue = document.getElementById('humidity-value');
+
+        const riskLevel = document.getElementById('risk-level');
+        const actionsList = document.querySelector('.actions-list');
+
+        function updateRiskAndActions() {
+            const wind = parseInt(windSlider.value);
+            const temp = parseInt(tempSlider.value);
+            const humidity = parseInt(humiditySlider.value);
+
+            let riskScore = 0;
+            let actions = [];
+
+            // Risk rules and actions based on the model's logic
+            if (wind < 5) {
+                riskScore += 2;
+                actions.push({
+                    title: "Risk from Wind",
+                    description: "Implement pollutant dispersion strategies, such as wind corridors in urban planning."
+                });
+            } else if (wind < 10) {
+                riskScore += 1;
+            }
+
+            if (temp > 30) {
+                riskScore += 2;
+                actions.push({
+                    title: "Risk from Temperature",
+                    description: "Promote the 'cool island effect' by creating more green spaces, green roofs, and permeable surfaces to mitigate urban heat."
+                });
+            } else if (temp > 25) {
+                riskScore += 1;
+            }
+
+            if (humidity < 30) {
+                riskScore += 2;
+                actions.push({
+                    title: "Risk from Urbanization and Soil",
+                    description: "Increase vegetation and green areas to improve soil moisture and air quality. Replace impermeable surfaces with permeable materials."
+                });
+            } else if (humidity < 50) {
+                riskScore += 1;
+            }
+
+            // Map the score to a risk level
+            let level = "Low";
+            let colorClass = "risk-low";
+            if (riskScore >= 4) {
+                level = "High";
+                colorClass = "risk-high";
+            } else if (riskScore >= 2) {
+                level = "Medium";
+                colorClass = "risk-medium";
+            }
+            
+            riskLevel.textContent = level;
+            riskLevel.className = `risk-score ${colorClass}`;
+            
+            renderActions(actions, level);
+        }
+
+        function renderActions(actions, level) {
+            actionsList.innerHTML = ''; // Clear previous actions
+
+            if (level === "Low" && actions.length === 0) {
+                actionsList.innerHTML = '<li><h4>Optimal Conditions</h4><p>The risk of pollutant accumulation is low. Maintain current planning and monitor conditions.</p></li>';
+            } else {
+                actions.forEach(action => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<h4>${action.title}</h4><p>${action.description}</p>`;
+                    actionsList.appendChild(li);
+                });
+            }
+        }
+
+        windSlider.oninput = function() {
+            windValue.textContent = this.value + " km/h";
+            updateRiskAndActions();
+        }
+
+        tempSlider.oninput = function() {
+            tempValue.textContent = this.value + "°C";
+            updateRiskAndActions();
+        }
+
+        humiditySlider.oninput = function() {
+            humidityValue.textContent = this.value + "%";
+            updateRiskAndActions();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', updateRiskAndActions);
+    </script>
+</body>
+</html>
