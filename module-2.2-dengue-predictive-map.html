@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Predictivo de Riesgo de Dengue - Jalisco</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet.js for the interactive map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 1rem; /* Add some padding around the main container */
+        }
+        /* NEW: Main container that flows in the page */
+        #app-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+        /* NEW: Aspect Ratio container for the map */
+        #map-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 60%; /* Creates a 5:3 aspect ratio. Change this % to adjust height */
+            height: 0;
+            background-color: #e5e7eb; /* Placeholder color */
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Controls panel just flows naturally below the map */
+        #controls-panel {
+            padding: 1.5rem;
+        }
+        /* Custom scrollbar for the panel on smaller heights */
+        .scrollable-content::-webkit-scrollbar { width: 8px; }
+        .scrollable-content::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scrollable-content::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .scrollable-content::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="map-wrapper">
+            <div id="map"></div>
+        </div>
+        <div id="controls-panel">
+             <!-- Panel Content -->
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Análisis de Riesgo</h1>
+                <p id="municipality-name" class="text-md text-gray-500 mb-4">Seleccione un municipio en el mapa</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Column 1: Urban Factors -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg text-gray-700 border-b pb-2">Factores Urbanos (1-5)</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">Agua y Drenaje</label>
+                        <input id="urban-factor-1" type="range" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500"><span >Deficiente</span><span>Excelente</span></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">Gestión de Residuos</label>
+                        <input id="urban-factor-2" type="range" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500"><span >Deficiente</span><span>Excelente</span></div>
+                    </div>
+                     <div>
+                        <label class="block text-sm font-medium text-gray-600">Densidad Poblacional</label>
+                        <input id="urban-factor-3" type="range" min="1" max="5" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-xs text-gray-500"><span >Baja</span><span>Muy Alta</span></div>
+                    </div>
+                </div>
+                
+                <!-- Column 2: Climate Data -->
+                <div class="space-y-4">
+                    <h3 class="font-bold text-lg text-gray-700 border-b pb-2">Datos Climáticos (°C)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                         <div>
+                            <label for="temp-current" class="block text-sm font-medium text-gray-600">Temp. Mín (Actual)</label>
+                            <input type="number" id="temp-current" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="ej: 22">
+                        </div>
+                        <div>
+                            <label for="dew-current" class="block text-sm font-medium text-gray-600">Pto. Rocío (Actual)</label>
+                            <input type="number" id="dew-current" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="ej: 18">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                         <input type="number" id="temp-lag1" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Temp. Mín (-1 mes)">
+                         <input type="number" id="dew-lag1" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Pto. Rocío (-1 mes)">
+                         <input type="number" id="temp-lag2" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Temp. Mín (-2 meses)">
+                         <input type="number" id="dew-lag2" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Pto. Rocío (-2 meses)">
+                         <input type="number" id="temp-lag3" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Temp. Mín (-3 meses)">
+                         <input type="number" id="dew-lag3" class="block w-full rounded-md border-gray-300 shadow-sm text-sm" placeholder="Pto. Rocío (-3 meses)">
+                     </div>
+                </div>
+
+                <!-- Column 3: Actions & Results -->
+                 <div class="space-y-4">
+                     <h3 class="font-bold text-lg text-gray-700 border-b pb-2">Acciones y Resultados</h3>
+                     <button id="calculate-risk" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">
+                        Calcular Riesgo
+                    </button>
+                    <div id="validation-message" class="hidden p-3 rounded-md bg-red-50 text-red-700 text-sm"></div>
+                    <div id="results-section" class="hidden">
+                         <div id="risk-output" class="p-4 rounded-lg text-center mb-4">
+                            <p class="text-lg font-bold" id="risk-level-text"></p>
+                            <p class="text-sm" id="risk-index-text"></p>
+                         </div>
+                         <div id="recommendations">
+                             <h4 class="font-semibold text-md text-gray-800 mb-2">Recomendaciones:</h4>
+                             <ul id="recommendations-list" class="list-disc list-inside space-y-2 text-sm text-gray-600">
+                             </ul>
+                         </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- MAP INITIALIZATION ---
+        const map = L.map('map').setView([20.659698, -103.349609], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // --- MUNICIPALITY DATA ---
+        const municipalities = {
+            'Guadalajara': { coords: [20.6736, -103.344], urbanFactors: [3, 2, 5], marker: null },
+            'Zapopan': { coords: [20.7206, -103.392], urbanFactors: [4, 3, 4], marker: null },
+            'Tlaquepaque': { coords: [20.6208, -103.313], urbanFactors: [3, 2, 4], marker: null },
+            'Tonalá': { coords: [20.625, -103.242], urbanFactors: [2, 2, 4], marker: null },
+            'Tlajomulco de Zúñiga': { coords: [20.478, -103.435], urbanFactors: [3, 3, 3], marker: null },
+            'Puerto Vallarta': { coords: [20.6534, -105.2253], urbanFactors: [4, 4, 4], marker: null },
+            'Lagos de Moreno': { coords: [21.359, -101.932], urbanFactors: [3, 3, 2], marker: null },
+            'Tepatitlán de Morelos': { coords: [20.816, -102.733], urbanFactors: [4, 4, 2], marker: null },
+            'Ocotlán': { coords: [20.354, -102.766], urbanFactors: [3, 2, 3], marker: null },
+            'Jocotepec': { coords: [20.293, -103.429], urbanFactors: [2, 2, 3], marker: null },
+            'Autlán de Navarro': { coords: [19.774, -104.366], urbanFactors: [3, 3, 2], marker: null },
+            'Ameca': { coords: [20.551, -104.041], urbanFactors: [3, 2, 2], marker: null },
+            'La Barca': { coords: [20.29, -102.546], urbanFactors: [2, 1, 2], marker: null },
+            'Zapotlán el Grande': { coords: [19.704, -103.463], urbanFactors: [4, 4, 3], marker: null },
+        };
+
+        // --- DOM ELEMENT REFERENCES ---
+        const calculateBtn = document.getElementById('calculate-risk');
+        const resultsSection = document.getElementById('results-section');
+        const municipalityNameEl = document.getElementById('municipality-name');
+        const validationMessageEl = document.getElementById('validation-message');
+        
+        let selectedMunicipality = null;
+
+        // --- FUNCTIONS ---
+        function selectMunicipality(name) {
+            selectedMunicipality = name;
+            const data = municipalities[name];
+            
+            municipalityNameEl.textContent = `Analizando: ${name}`;
+            document.getElementById('urban-factor-1').value = data.urbanFactors[0];
+            document.getElementById('urban-factor-2').value = data.urbanFactors[1];
+            document.getElementById('urban-factor-3').value = data.urbanFactors[2];
+
+            const inputs = ['temp-current', 'dew-current', 'temp-lag1', 'dew-lag1', 'temp-lag2', 'dew-lag2', 'temp-lag3', 'dew-lag3'];
+            inputs.forEach(id => document.getElementById(id).value = '');
+            resultsSection.classList.add('hidden');
+            validationMessageEl.classList.add('hidden');
+        }
+
+        function calculateDengueRisk() {
+            if (!selectedMunicipality) {
+                 validationMessageEl.textContent = "Por favor, seleccione un municipio del mapa primero.";
+                 validationMessageEl.classList.remove('hidden');
+                 return;
+            }
+        
+            const tempCurrent = parseFloat(document.getElementById('temp-current').value);
+            const dewCurrent = parseFloat(document.getElementById('dew-current').value);
+            
+            if (isNaN(tempCurrent) || isNaN(dewCurrent)) {
+                validationMessageEl.textContent = "Por favor, ingrese los datos climáticos del mes actual.";
+                validationMessageEl.classList.remove('hidden');
+                return;
+            }
+            validationMessageEl.classList.add('hidden');
+
+            const tempLag1 = parseFloat(document.getElementById('temp-lag1').value) || tempCurrent;
+            const dewLag1 = parseFloat(document.getElementById('dew-lag1').value) || dewCurrent;
+            const tempLag2 = parseFloat(document.getElementById('temp-lag2').value) || tempLag1;
+            const dewLag2 = parseFloat(document.getElementById('dew-lag2').value) || dewLag1;
+            const tempLag3 = parseFloat(document.getElementById('temp-lag3').value) || tempLag2;
+            const dewLag3 = parseFloat(document.getElementById('dew-lag3').value) || dewLag2;
+
+            const urbanFactor1 = parseInt(document.getElementById('urban-factor-1').value);
+            const urbanFactor2 = parseInt(document.getElementById('urban-factor-2').value);
+            const urbanFactor3 = parseInt(document.getElementById('urban-factor-3').value);
+            
+            const avgTemp = (tempCurrent * 0.4) + (tempLag1 * 0.3) + (tempLag2 * 0.2) + (tempLag3 * 0.1);
+            const avgDew = (dewCurrent * 0.4) + (dewLag1 * 0.3) + (dewLag2 * 0.2) + (dewLag3 * 0.1);
+
+            let tempScore = (Math.max(0, avgTemp - 18)) / 15;
+            let dewScore = (Math.max(0, avgDew - 15)) / 15;
+            let climateScore = Math.min(1, (tempScore * 0.6 + dewScore * 0.4));
+
+            const urbanScore1 = (5 - urbanFactor1) / 4;
+            const urbanScore2 = (5 - urbanFactor2) / 4;
+            const urbanScore3 = (urbanFactor3 - 1) / 4;
+            let urbanScore = (urbanScore1 * 0.45) + (urbanScore2 * 0.35) + (urbanScore3 * 0.2);
+            
+            const amplificationFactor = 1 + (urbanScore * 0.5);
+            
+            const baseRisk = (climateScore * 0.75) + (urbanScore * 0.25);
+            const finalRiskIndex = Math.min(1, baseRisk * amplificationFactor);
+
+            displayResults(finalRiskIndex);
+        }
+
+        function displayResults(riskIndex) {
+            const riskOutput = document.getElementById('risk-output');
+            const riskLevelText = document.getElementById('risk-level-text');
+            const riskIndexText = document.getElementById('risk-index-text');
+            const recommendationsList = document.getElementById('recommendations-list');
+            
+            let level, colorClasses, recommendations;
+
+            if (riskIndex < 0.25) {
+                level = 'Riesgo Bajo';
+                colorClasses = 'bg-green-100 text-green-800';
+                recommendations = `<li>Mantener vigilancia epidemiológica estándar.</li><li>Continuar campañas educativas sobre eliminación de criaderos.</li>`;
+            } else if (riskIndex < 0.5) {
+                level = 'Riesgo Moderado';
+                colorClasses = 'bg-yellow-100 text-yellow-800';
+                recommendations = `<li>Aumentar frecuencia de inspecciones domiciliarias para control larvario.</li><li>Reforzar campañas de comunicación sobre síntomas y prevención.</li>`;
+            } else if (riskIndex < 0.75) {
+                level = 'Riesgo Alto';
+                colorClasses = 'bg-orange-100 text-orange-800';
+                recommendations = `<li>Activar brigadas de control vectorial para fumigación en áreas de alta incidencia.</li><li>Preparar centros de salud para posible aumento de casos.</li>`;
+            } else {
+                level = 'Riesgo Muy Alto';
+                colorClasses = 'bg-red-100 text-red-800';
+                recommendations = `<li>Declarar alerta sanitaria local y movilizar recursos de emergencia.</li><li>Realizar fumigación espacial en las áreas afectadas.</li>`;
+            }
+
+            riskOutput.className = `p-4 rounded-lg text-center mb-4 ${colorClasses}`;
+            riskLevelText.textContent = level;
+            riskIndexText.textContent = `Índice de Riesgo: ${riskIndex.toFixed(2)} / 1.00`;
+            recommendationsList.innerHTML = recommendations;
+
+            resultsSection.classList.remove('hidden');
+            updateMarkerColor(selectedMunicipality, riskIndex);
+        }
+        
+        function updateMarkerColor(name, riskIndex) {
+            const marker = municipalities[name].marker;
+            if (!marker) return;
+
+            let color = '#22c55e'; // Verde
+            if (riskIndex >= 0.75) color = '#ef4444'; // Rojo
+            else if (riskIndex >= 0.5) color = '#f97316'; // Naranja
+            else if (riskIndex >= 0.25) color = '#eab308'; // Amarillo
+
+            marker.setStyle({ fillColor: color, color: '#1f2937' });
+        }
+
+        // --- EVENT LISTENERS & INITIALIZATION ---
+        calculateBtn.addEventListener('click', calculateDengueRisk);
+
+        Object.keys(municipalities).forEach(name => {
+            const data = municipalities[name];
+            const marker = L.circle(data.coords, {
+                color: '#1f2937',
+                fillColor: '#6b7280',
+                fillOpacity: 0.7,
+                radius: 8000
+            }).addTo(map);
+
+            marker.bindPopup(`<b>${name}</b><br>Click para analizar riesgo.`);
+            
+            marker.on('click', () => {
+                selectMunicipality(name);
+                map.flyTo(data.coords, 10);
+            });
+
+            municipalities[name].marker = marker;
+        });
+
+        setTimeout(() => map.invalidateSize(), 100);
+    });
+</script>
+
+</body>
+</html>
+
