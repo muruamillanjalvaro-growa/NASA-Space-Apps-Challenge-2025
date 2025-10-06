@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA | Bio-Sustainability Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #010409;
+            --bg-secondary: #0D1117;
+            --border-color: #30363D;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --accent-blue: #388bfd;
+            --font-main: 'Inter', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+            --status-optimal: #238636;
+            --status-nominal: #388bfd;
+            --status-compromised: #d29922;
+            --status-critical: #da3633;
+        }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes glitch { 2%,64%{ transform: translate(2px,0) skew(0deg); } 4%,60%{ transform: translate(-2px,0) skew(0deg); } 62%{ transform: translate(0,0) skew(5deg); } }
+
+        body { font-family: var(--font-main); background-color: var(--bg-primary); color: var(--text-primary); margin: 0; padding: 2rem; }
+        .container { width: 100%; max-width: 1800px; margin: 0 auto; }
+        h1, h2, h3, h4 { margin: 0; font-weight: 600; font-family: var(--font-mono); }
+        .card { background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        
+        .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; }
+        @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        
+        .control-group label { font-weight: 500; font-family: var(--font-mono); font-size: 0.9rem; display: block; margin-bottom: 0.75rem; }
+        .control-group input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--border-color); border-radius: 2px; outline: none; }
+        .control-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: var(--text-primary); border: 3px solid var(--bg-secondary); border-radius: 50%; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .control-group input[type="range"]:hover::-webkit-slider-thumb { background: #fff; transform: scale(1.1); }
+        .control-group input[type="range"]:active::-webkit-slider-thumb { box-shadow: 0 0 0 4px #388bfd44; transform: scale(1.2); }
+        .slider-value { text-align: right; font-weight: 700; color: var(--accent-blue); font-family: var(--font-mono); font-size: 0.9rem; margin-top: 0.5rem; }
+        
+        .system-status-display { text-align: center; padding: 1.5rem; border-radius: 8px; transition: all 0.5s ease; border-width: 1px; border-style: solid; }
+        .system-status-value { font-size: 1.8rem; font-weight: 700; letter-spacing: 2px; }
+        .critical-flash { animation: flash 1s infinite; }
+        .critical-glitch { animation: glitch 0.3s linear infinite; }
+
+        .telemetry-item { text-align: center; }
+        .telemetry-value { font-size: 2.25rem; font-weight: 700; font-family: var(--font-mono); }
+        .telemetry-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 0.25rem; }
+
+        .protocol-log { font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.8; }
+        .protocol-log .log-item { animation: fadeInUp 0.5s ease-out; opacity: 0; animation-fill-mode: forwards; }
+        .log-time { color: var(--text-secondary); margin-right: 1rem; }
+        .log-level-ANALYSIS { color: #8B949E; }
+        .log-level-NOMINAL { color: var(--status-nominal); }
+        .log-level-COMPROMISED { color: var(--status-compromised); }
+        .log-level-CRITICAL { color: var(--status-critical); }
+        .log-message {}
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl">Bio-Sustainability Command</h1>
+            <p class="text-secondary" style="font-family:'Inter'">Habitat Growth Module Monitoring</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-lg">MISSION DAY: <span id="mission-day-display">15</span> (<span id="mission-stage-display"></span>)</h2>
+            <p id="mission-phase-display" class="text-secondary text-sm">MARS CRUISE</p>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <aside class="sidebar space-y-4">
+            <div>
+                <h2 class="text-lg px-2 mb-3">Mission Profile & Day</h2>
+                <div class="card space-y-6">
+                    <div class="control-group">
+                        <label>Mission Profile</label>
+                        <select id="mission-profile" class="w-full bg-primary text-primary border border-border-color rounded-md p-2 font-mono">
+                            <option value="mars_cruise">Mars Cruise</option>
+                            <option value="lunar_orbit">Lunar Orbit</option>
+                            <option value="interplanetary">Interplanetary</option>
+                        </select>
+                    </div>
+                     <div class="control-group">
+                        <label for="mission_day">Mission Day (1-90)</label>
+                        <input type="range" id="mission_day" min="1" max="90" step="1" value="15">
+                        <div class="slider-value"><span id="mission_day-value">15</span></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-lg px-2 mb-3">Manual Override Controls</h2>
+                 <div class="card space-y-6">
+                    <div class="control-group">
+                        <label for="par">PAR Light Flux</label>
+                        <input type="range" id="par" min="100" max="800" step="25" value="500">
+                        <div class="slider-value"><span id="par-value">500</span> µmol/m²/s</div>
+                    </div>
+                    <div class="control-group">
+                        <label for="co2">Atmosphere CO₂</label>
+                        <input type="range" id="co2" min="400" max="2000" step="50" value="1000">
+                        <div class="slider-value"><span id="co2-value">1000</span> PPM</div>
+                    </div>
+                     <div class="control-group">
+                        <label for="thermal_efficiency">Thermal Efficiency</label>
+                        <input type="range" id="thermal_efficiency" min="50" max="100" step="1" value="95">
+                        <div class="slider-value"><span id="thermal_efficiency-value">95</span>%</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                 <h2 class="text-lg px-2 mb-3">Simulate Anomaly</h2>
+                 <button id="anomaly-btn" class="w-full p-3 rounded-md bg-red-800/50 text-red-300 border border-red-600 hover:bg-red-800/80 transition-colors font-mono">Trigger Solar Flare</button>
+            </div>
+        </aside>
+
+        <main class="dashboard space-y-6">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3 class="mb-4">System Status</h3>
+                    <div id="system-status-display" class="system-status-display">
+                        <div id="system-status-value" class="system-status-value"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="mb-4">Biomass Production</h3>
+                    <div class="telemetry-item">
+                        <div id="biomass-value" class="telemetry-value text-4xl mt-4">0.0 g/m²/day</div>
+                        <div class="telemetry-label mt-2">Growth Rate Projection</div>
+                    </div>
+                </div>
+                <div class="card">
+                     <h3 class="mb-4">Key Performance Indices</h3>
+                     <div class="grid grid-cols-2 gap-4 mt-6">
+                        <div class="telemetry-item">
+                            <div id="bri-value" class="telemetry-value">0</div>
+                            <div class="telemetry-label">Bio-Regen Index</div>
+                        </div>
+                         <div class="telemetry-item">
+                            <div id="tmsi-value" class="telemetry-value">0</div>
+                            <div class="telemetry-label">Thermo-Molecular Stress</div>
+                        </div>
+                         <div class="telemetry-item">
+                            <div id="hsi-value" class="telemetry-value">0</div>
+                            <div class="telemetry-label">Habitat Stability Index</div>
+                        </div>
+                         <div class="telemetry-item">
+                            <div id="esi-value" class="telemetry-value">0%</div>
+                            <div class="telemetry-label">Energy Signature</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="mb-4">System Log & Hypothesis Analysis</h3>
+                <div id="protocol-log-container" class="protocol-log h-64 overflow-y-auto pr-2">
+                    <p class="text-secondary text-center py-8">Awaiting telemetry...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+class MissionControlSim {
+    constructor() {
+        this.state = {
+            mission: 'mars_cruise',
+            mission_day: 15,
+            par: 500,
+            co2: 1000,
+            thermal_efficiency: 95,
+            external_radiation: 1.5,
+            temp_volatility: 0.5,
+        };
+        this.missionProfiles = {
+            mars_cruise: { base_rad: 1.5, base_temp_vol: 0.5, name: "Mars Cruise" },
+            lunar_orbit: { base_rad: 3.0, base_temp_vol: 1.5, name: "Lunar Orbit" },
+            interplanetary: { base_rad: 5.0, base_temp_vol: 1.0, name: "Interplanetary" }
+        };
+        this.phenology = {
+            germination: { start: 1, end: 10, sensitivities: [0.9, 0.5] },
+            vegetative: { start: 11, end: 40, sensitivities: [0.5, 0.8] },
+            flowering: { start: 41, end: 60, sensitivities: [1.0, 0.7] },
+            fruiting: { start: 61, end: 90, sensitivities: [0.4, 1.0] }
+        };
+        this.debouncedRunSimulation = this.debounce(() => this.runSimulation(), 250);
+        this.lastRenderedValues = { bri: 0, tmsi: 0, biomass: 0, hsi: 0, esi: 0 };
+        this.init();
+    }
+
+    init() {
+        this.ui = {
+            sliders: document.querySelectorAll('.control-group input[type="range"]'),
+            missionProfile: document.getElementById('mission-profile'),
+            anomalyBtn: document.getElementById('anomaly-btn'),
+            statusDisplay: document.getElementById('system-status-display'),
+            statusValue: document.getElementById('system-status-value'),
+            briValue: document.getElementById('bri-value'),
+            tmsiValue: document.getElementById('tmsi-value'),
+            hsiValue: document.getElementById('hsi-value'),
+            esiValue: document.getElementById('esi-value'),
+            biomassValue: document.getElementById('biomass-value'),
+            logContainer: document.getElementById('protocol-log-container'),
+            missionDayDisplay: document.getElementById('mission-day-display'),
+            missionPhaseDisplay: document.getElementById('mission-phase-display'),
+            missionStageDisplay: document.getElementById('mission-stage-display'),
+        };
+
+        this.ui.sliders.forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                const id = e.target.id;
+                this.state[id] = parseFloat(e.target.value);
+                document.getElementById(`${id}-value`).textContent = e.target.value;
+                if(id === 'mission_day') {
+                   this.ui.missionDayDisplay.textContent = e.target.value;
+                }
+                this.debouncedRunSimulation();
+            });
+        });
+
+        this.ui.missionProfile.addEventListener('change', (e) => {
+            this.state.mission = e.target.value;
+            const profile = this.missionProfiles[this.state.mission];
+            this.state.external_radiation = profile.base_rad;
+            this.state.temp_volatility = profile.base_temp_vol;
+            this.ui.missionPhaseDisplay.textContent = profile.name;
+            this.runSimulation();
+        });
+
+        this.ui.anomalyBtn.addEventListener('click', () => {
+            this.state.external_radiation = 20.0;
+            this.runSimulation();
+            this.ui.anomalyBtn.disabled = true;
+            setTimeout(() => {
+                 const profile = this.missionProfiles[this.state.mission];
+                 this.state.external_radiation = profile.base_rad;
+                 this.ui.anomalyBtn.disabled = false;
+                 this.runSimulation();
+            }, 5000);
+        });
+
+        this.runSimulation();
+    }
+
+    debounce(func, delay) { let timeout; return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); }; }
+
+    runSimulation() {
+        const { mission_day, par, co2, thermal_efficiency, external_radiation, temp_volatility } = this.state;
+        const protocols = [];
+        
+        const currentStageData = Object.entries(this.phenology).find(([name, p]) => mission_day >= p.start && mission_day <= p.end);
+        const currentStage = currentStageData ? this.phenology[currentStageData[0]] : this.phenology.fruiting;
+        const stageName = currentStageData ? currentStageData[0].charAt(0).toUpperCase() + currentStageData[0].slice(1) : 'Fruiting';
+        const [stress_sensitivity, resource_sensitivity] = currentStage.sensitivities;
+
+        this.ui.missionStageDisplay.textContent = stageName;
+
+        // 1. Habitat & Stress Indices
+        const hsi = Math.max(0, thermal_efficiency - (temp_volatility * 10)); // Habitat Stability Index
+        const rad_stress = Math.pow(external_radiation / 5, 2) * stress_sensitivity;
+        const thermal_instability_stress = Math.max(0, (90 - hsi) / 100) * 2; // Low HSI amplifies stress
+        const tmsi = Math.min(100, (rad_stress + thermal_instability_stress) * 30); // Thermo-Molecular Stress Index
+
+        let power_diverted = 0;
+        if (external_radiation > 15) {
+            protocols.push({ level: 'CRITICAL', message: 'CRITICAL: Solar Flare. Diverting 60% power to magnetic shielding.' });
+            power_diverted = 0.6;
+        } else if (external_radiation > 5) {
+            protocols.push({ level: 'COMPROMISED', message: 'High Energy Particle Flux. Diverting 30% power to shields.' });
+            power_diverted = 0.3;
+        }
+
+        // 2. Bio-Regenerative & Production
+        const par_factor = (par / 700) * (1 - power_diverted);
+        const co2_factor = (1 - Math.min(1, Math.abs(1100 - co2) / 900)) * resource_sensitivity;
+        const bri = Math.min(100, (par_factor + co2_factor) / 2 * 100);
+        
+        const stress_impact_factor = 1 - (tmsi / 150);
+        const biomass_growth = 25 * (bri / 100) * stress_impact_factor;
+        
+        const esi = (power_diverted * 50) + (par / 800 * 40) + 10; // Energy Signature Index
+        
+        // 4. Generate Hypotheses & Determine System Status
+        if (power_diverted > 0) {
+            protocols.push({ level: 'ANALYSIS', message: `HYPOTHESIS: Power diversion to shields is limiting PAR flux. Biomass potential capped.` });
+        }
+        if (tmsi > 50) {
+            protocols.push({ level: 'ANALYSIS', message: `HYPOTHESIS: High TMSI during critical ${stageName} stage may cause irreversible cell damage.` });
+        }
+        if (hsi < 80) {
+            protocols.push({ level: 'ANALYSIS', message: `HYPOTHESIS: Suboptimal Habitat Stability (HSI) is amplifying molecular stress. Thermal regulation systems inefficient.` });
+        }
+        if (protocols.length === 0) protocols.push({ level: 'NOMINAL', message: 'All systems performing within expected parameters.' });
+
+        let system_status = 'OPTIMAL';
+        if (biomass_growth < 5 || tmsi > 80) system_status = 'CRITICAL';
+        else if (biomass_growth < 15 || tmsi > 50 || hsi < 70) system_status = 'COMPROMISED';
+        else if (biomass_growth < 20 || tmsi > 20) system_status = 'NOMINAL';
+        
+        this.render({ system_status, biomass_growth, bri, tmsi, hsi, esi, protocols });
+    }
+
+    animateValue(element, start, end, duration, suffix = '', decimals = 0) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const value = progress * (end - start) + start;
+            element.textContent = `${value.toFixed(decimals)}${suffix}`;
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    render({ system_status, biomass_growth, bri, tmsi, hsi, esi, protocols }) {
+        const statusConfig = { OPTIMAL: { color: 'var(--status-optimal)', text: 'OPTIMAL' }, NOMINAL: { color: 'var(--status-nominal)', text: 'NOMINAL' }, COMPROMISED: { color: 'var(--status-compromised)', text: 'COMPROMISED' }, CRITICAL: { color: 'var(--status-critical)', text: 'CRITICAL' } };
+        const config = statusConfig[system_status];
+
+        this.ui.statusDisplay.style.backgroundColor = `${config.color}20`;
+        this.ui.statusDisplay.style.borderColor = config.color;
+        this.ui.statusValue.textContent = config.text;
+        this.ui.statusValue.style.color = config.color;
+        this.ui.statusValue.classList.toggle('critical-flash', system_status === 'CRITICAL');
+        document.querySelector('h1').classList.toggle('critical-glitch', system_status === 'CRITICAL');
+        
+        this.animateValue(this.ui.briValue, this.lastRenderedValues.bri, bri, 500, '', 0);
+        this.animateValue(this.ui.tmsiValue, this.lastRenderedValues.tmsi, tmsi, 500, '', 0);
+        this.animateValue(this.ui.hsiValue, this.lastRenderedValues.hsi, hsi, 500, '', 0);
+        this.animateValue(this.ui.esiValue, this.lastRenderedValues.esi, esi, 500, '%', 0);
+        this.animateValue(this.ui.biomassValue, this.lastRenderedValues.biomass, biomass_growth, 500, ' g/m²/day', 1);
+        this.lastRenderedValues = { bri, tmsi, hsi, esi, biomass: biomass_growth };
+        
+        this.ui.briValue.style.color = bri > 80 ? 'var(--status-optimal)' : bri > 60 ? 'var(--status-nominal)' : 'var(--status-compromised)';
+        this.ui.tmsiValue.style.color = tmsi > 50 ? 'var(--status-critical)' : tmsi > 20 ? 'var(--status-compromised)' : 'var(--status-nominal)';
+        this.ui.hsiValue.style.color = hsi > 90 ? 'var(--status-optimal)' : hsi > 75 ? 'var(--status-nominal)' : 'var(--status-compromised)';
+        this.ui.esiValue.style.color = esi > 85 ? 'var(--status-critical)' : esi > 60 ? 'var(--status-compromised)' : 'var(--status-nominal)';
+        this.ui.biomassValue.style.color = config.color;
+
+        this.ui.logContainer.innerHTML = protocols.map((p, i) => `
+            <div class="log-item" style="animation-delay: ${i * 50}ms">
+                <span class="log-time">[D${this.state.mission_day} ${new Date().toLocaleTimeString()}]</span>
+                <span class="log-level-${p.level}">[${p.level}]</span>
+                <span class="log-message">${p.message}</span>
+            </div>
+        `).join('');
+    }
+}
+
+const app = new MissionControlSim();
+</script>
+</body>
+</html>
