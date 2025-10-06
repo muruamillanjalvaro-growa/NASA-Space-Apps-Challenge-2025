@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.T.R.A. - Advanced Symbiotic Terraforming & Resource Agriculture</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --primary-glow: rgba(0, 255, 255, 0.8);
+            --secondary-glow: rgba(255, 100, 0, 0.7); /* Orange for Martian/Terraforming feel */
+            --success-glow: rgba(0, 255, 128, 0.8);
+            --danger-glow: rgba(255, 70, 70, 0.8);
+            --bg-color: #010218;
+            --glass-bg: rgba(10, 15, 47, 0.75);
+            --border-color: rgba(0, 255, 255, 0.25);
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-color);
+            color: #e0e6f1;
+            background-image:
+                radial-gradient(circle at 5% 5%, rgba(255, 100, 0, 0.1) 0%, transparent
+                25%),
+                radial-gradient(circle at 95% 95%, rgba(0, 255, 255, 0.1) 0%, transparent 25%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1), 0 0 40px rgba(255, 100, 0, 0.1);
+        }
+
+        .holographic-text { text-shadow: 0 0 6px var(--primary-glow), 0 0 12px var(--secondary-glow); }
+        .success-text { text-shadow: 0 0 5px var(--success-glow); }
+        .danger-text { text-shadow: 0 0 5px var(--danger-glow); }
+
+        .module-button {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        .module-button:hover { background-color: rgba(0, 255, 255, 0.1); border-left-color: var(--primary-glow); }
+        .module-button.active { background-color: rgba(0, 255, 255, 0.2); border-left-color: var(--primary-glow); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--secondary-glow); border-radius: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.6s ease forwards; }
+
+        @keyframes pulse-danger {
+            0% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 70, 70, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 70, 70, 0); }
+        }
+        .alert-active { border-color: var(--danger-glow); animation: pulse-danger 2s infinite; }
+
+        .loader {
+            border: 4px solid var(--border-color);
+            border-left-color: var(--primary-glow);
+            border-right-color: var(--secondary-glow);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.2s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .tab-button { transition: all 0.2s ease; border-bottom: 2px solid transparent; }
+        .tab-button.active, .tab-button:hover { color: var(--primary-glow); border-bottom-color: var(--primary-glow); }
+        
+        .milpa-node { transition: all 0.3s ease; cursor: pointer; }
+        .milpa-node:hover { transform: scale(1.1); filter: drop-shadow(0 0 10px white); }
+        .milpa-link { transition: all 0.3s ease; }
+        .milpa-text { pointer-events: none; user-select: none; }
+        
+        #milpa-tooltip {
+            position: absolute;
+            display: none;
+            padding: 8px;
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 10;
+        }
+        
+        .custom-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .custom-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+    </style>
+</head>
+<body class="p-2 md:p-4 lg:p-6">
+
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-95 flex flex-col justify-center items-center z-50">
+        <img src="https://i.imgur.com/gJe6x0H.png" alt="NASA Logo" class="h-24 w-auto mb-6 opacity-80">
+        <div class="loader"></div>
+        <p class="font-orbitron text-xl mt-6 text-cyan-300 holographic-text">INITIALIZING A.S.T.R.A. PLATFORM...</p>
+        <p id="loading-status" class="mt-2 text-gray-400">Loading Closed-Loop Agriculture Protocols...</p>
+    </div>
+
+    <main id="main-content" class="opacity-0 transition-opacity duration-1000">
+        <header class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-3xl lg:text-4xl font-orbitron holographic-text">A.S.T.R.A.</h1>
+                <p class="text-cyan-300">Advanced Symbiotic Terraforming & Resource Agriculture</p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                <div class="glass-panel p-4 flex-grow">
+                    <h2 class="font-orbitron text-xl mb-4 border-b border-cyan-500/20 pb-2">HABITAT MODULES</h2>
+                    <div id="module-browser" class="h-96 overflow-y-auto pr-2 space-y-1"></div>
+                </div>
+                <div class="glass-panel p-4">
+                    <h2 class="font-orbitron text-xl mb-4 border-b border-cyan-500/20 pb-2">SYSTEM LOG</h2>
+                    <div id="system-log" class="h-48 overflow-y-auto space-y-2 text-sm pr-2"></div>
+                </div>
+            </div>
+
+            <div id="display-panel" class="lg:col-span-6 glass-panel p-4 md:p-6 min-h-[85vh] relative"></div>
+
+            <div class="lg:col-span-3 flex flex-col gap-4">
+                <div class="glass-panel p-4 relative">
+                     <div id="milpa-tooltip"></div>
+                    <h2 class="font-orbitron text-xl mb-2 text-center">SYMBIOTIC MILPA VISUALIZER</h2>
+                    <div id="milpa-viewer" class="h-72 w-full flex justify-center items-center">
+                        <svg id="milpa-svg" viewBox="0 0 300 300" class="w-full h-full"></svg>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 flex-grow">
+                     <h2 class="font-orbitron text-xl mb-4 border-b border-cyan-500/20 pb-2">MISSION STATUS</h2>
+                     <div id="mission-status-panel" class="flex flex-col justify-around h-full"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script type="module">
+    document.addEventListener('DOMContentLoaded', () => {
+        lucide.createIcons();
+        const App = new AstroAgriSimulator();
+        App.init();
+    });
+
+    class AstroAgriSimulator {
+        constructor() {
+            this.dom = {
+                loadingOverlay: document.getElementById('loading-overlay'),
+                loadingStatus: document.getElementById('loading-status'),
+                mainContent: document.getElementById('main-content'),
+                systemLog: document.getElementById('system-log'),
+                displayPanel: document.getElementById('display-panel'),
+                moduleBrowser: document.getElementById('module-browser'),
+                milpaViewer: document.getElementById('milpa-viewer'),
+                milpaSVG: document.getElementById('milpa-svg'),
+                milpaTooltip: document.getElementById('milpa-tooltip'),
+                missionStatusPanel: document.getElementById('mission-status-panel'),
+            };
+            this.state = {
+                activeChart: null,
+                activeModule: null,
+                activeEvent: null,
+            };
+            this.MOCK_DATA = this.getMockData();
+            this.eventInterval = null;
+        }
+
+        init() {
+            this.runLoadingSequence();
+            this.populateModuleBrowser();
+        }
+
+        runLoadingSequence() {
+            const steps = [
+                { delay: 1000, text: 'Calibrating Nutrient Flow Regulators...' },
+                { delay: 2000, text: 'Syncing Photosynthetic Response Models...' },
+                { delay: 3000, text: 'Compiling Growth Protocol Archetypes...' },
+                { delay: 4000, text: 'SYSTEM ONLINE. Welcome, Mission Agriculturist.' },
+            ];
+            steps.forEach(step => setTimeout(() => this.dom.loadingStatus.textContent = step.text, step.delay));
+            setTimeout(() => {
+                this.dom.loadingOverlay.style.opacity = '0';
+                this.dom.mainContent.style.opacity = '1';
+                setTimeout(() => this.dom.loadingOverlay.style.display = 'none', 1000);
+                this.addLogEntry('A.S.T.R.A. Platform Initialized.', 'success');
+                this.selectModule(this.MOCK_DATA.modules[0].id);
+                this.startEventSimulator();
+            }, 4500);
+        }
+
+        addLogEntry(message, type = 'info') {
+            const icons = { info: 'activity', success: 'check-circle', warning: 'alert-triangle', danger: 'shield-alert' };
+            const colors = { info: 'text-cyan-400', success: 'text-green-400', warning: 'text-yellow-400', danger: 'text-red-400 font-bold' };
+            const entry = document.createElement('div');
+            entry.className = `flex items-start gap-2 fade-in ${colors[type]}`;
+            entry.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4 mt-1 flex-shrink-0"></i><p>${message}</p>`;
+            this.dom.systemLog.prepend(entry);
+            lucide.createIcons({ nodes: [entry.querySelector('i')] });
+        }
+
+        populateModuleBrowser() {
+            this.MOCK_DATA.modules.forEach(module => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-3 rounded-md font-bold module-button flex justify-between items-center';
+                button.dataset.moduleId = module.id;
+                button.innerHTML = `<span>${module.name}</span><span class="text-xs font-light text-gray-400">${module.location}</span>`;
+                button.onclick = () => this.selectModule(module.id);
+                this.dom.moduleBrowser.appendChild(button);
+            });
+        }
+
+        selectModule(moduleId) {
+            if (this.state.activeModule?.id === moduleId) return;
+            this.addLogEntry(`Accessing data for module ${moduleId}...`);
+
+            this.state.activeModule = this.MOCK_DATA.modules.find(m => m.id === moduleId);
+            
+            document.querySelectorAll('.module-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.moduleId === moduleId);
+            });
+
+            this.renderMainDisplay(this.state.activeModule);
+            this.updateMissionStatus();
+            this.renderMilpaVisualizer(this.state.activeModule);
+        }
+        
+        renderMainDisplay(module) {
+            this.dom.displayPanel.innerHTML = `
+                <div class="fade-in h-full flex flex-col">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h2 class="text-3xl font-orbitron holographic-text">${module.name}</h2>
+                            <p class="text-orange-300">Location: ${module.location}</p>
+                        </div>
+                        <div class="text-right text-sm">
+                            <p>Status: <span class="font-bold text-green-400">NOMINAL</span></p>
+                            <p>Cycle Day: <span class="font-bold text-cyan-300">${module.cycle_day}</span></p>
+                        </div>
+                    </div>
+                    <div class="border-t border-b border-cyan-500/20 my-4 flex flex-wrap">
+                        <button class="tab-button active p-3" data-tab="simulation">Growth Simulation</button>
+                        <button class="tab-button p-3" data-tab="hypothesis">Hypothesis Lab</button>
+                        <button class="tab-button p-3" data-tab="phenology">Phenological Stress</button>
+                        <button class="tab-button p-3" data-tab="eclss">ECLSS Control</button>
+                    </div>
+                    <div id="tab-content" class="flex-grow min-h-0"></div>
+                </div>
+            `;
+            const tabs = this.dom.displayPanel.querySelectorAll('.tab-button');
+            tabs.forEach(tab => tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.renderTabContent(tab.dataset.tab, module);
+            }));
+            this.renderTabContent('simulation', module);
+        }
+
+        renderTabContent(tabName, module) {
+            const container = document.getElementById('tab-content');
+            this.addLogEntry(`Rendering ${tabName} data for ${module.name}.`);
+            switch(tabName) {
+                case 'simulation':
+                    container.innerHTML = this.getSimulationHTML();
+                    this.setupSimulationControls(module);
+                    break;
+                case 'hypothesis':
+                    container.innerHTML = this.getHypothesisLabHTML();
+                    this.setupHypothesisLabControls();
+                    break;
+                case 'phenology':
+                    container.innerHTML = `<div class="h-full flex justify-center items-center"><div class="w-full max-w-md"><canvas id="phenology-chart"></canvas></div></div>`;
+                    this.renderPhenologyChart(module.phenology);
+                    break;
+                case 'eclss':
+                    container.innerHTML = this.getECLSSHTML();
+                    this.renderECLSSCharts();
+                    break;
+            }
+        }
+        
+        // --- RENDERERS FOR EACH TAB ---
+
+        getSimulationHTML() {
+            return `
+                <div class="h-full flex flex-col">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                           <label class="block text-sm font-medium text-cyan-300 mb-1">Select Crop:</label>
+                           <select id="crop-select" class="w-full bg-black/30 border border-cyan-500/30 rounded-md p-2 text-white"></select>
+                        </div>
+                        <div>
+                           <label class="block text-sm font-medium text-cyan-300 mb-1">Select Growth Protocol (Archetype):</label>
+                           <select id="archetype-select" class="w-full bg-black/30 border border-cyan-500/30 rounded-md p-2 text-white"></select>
+                        </div>
+                    </div>
+                    <div class="flex-grow h-80"><canvas id="yield-chart"></canvas></div>
+                </div>
+            `;
+        }
+
+        setupSimulationControls(module) {
+            const cropSelect = document.getElementById('crop-select');
+            const archetypeSelect = document.getElementById('archetype-select');
+            
+            cropSelect.innerHTML = Object.keys(module.crops).map(c => `<option value="${c}">${this.MOCK_DATA.crop_details[c].name}</option>`).join('');
+            archetypeSelect.innerHTML = this.MOCK_DATA.archetypes.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+
+            const updateView = () => {
+                const cropId = cropSelect.value;
+                const archetypeId = archetypeSelect.value;
+                const archetype = this.MOCK_DATA.archetypes.find(a => a.id === archetypeId);
+                const baselineYield = this.MOCK_DATA.crop_details[cropId].yield;
+
+                let modifiedYield = [...baselineYield];
+                modifiedYield = modifiedYield.map(y => y * archetype.yield_modifier);
+                
+                if (this.state.activeEvent) {
+                    modifiedYield = modifiedYield.map(y => y * (this.state.activeEvent.effects.yield_modifier || 1));
+                }
+                
+                this.renderYieldChart(modifiedYield, this.MOCK_DATA.crop_details[cropId].name, this.MOCK_DATA.crop_details[cropId].color);
+                this.addLogEntry(`Simulating ${cropId} under ${archetype.name} protocol.`);
+            };
+
+            cropSelect.addEventListener('change', updateView);
+            archetypeSelect.addEventListener('change', updateView);
+            this.dom.displayPanel.updateSimulation = updateView;
+            updateView();
+        }
+        
+        getHypothesisLabHTML() {
+            return `
+                <div class="h-full flex flex-col p-2">
+                    <h3 class="text-xl font-orbitron mb-2">Hypothesis Generation Lab</h3>
+                    <p class="text-sm text-gray-400 mb-4">Test how environmental stressors impact mission objectives, based on predictive models.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-cyan-300 mb-1">Select Stressor Variable:</label>
+                            <select id="hypo-stressor" class="w-full bg-black/30 border border-cyan-500/30 rounded-md p-2 text-white">
+                                ${this.MOCK_DATA.hypotheses.stressors.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-cyan-300 mb-1">Select Mission Objective:</label>
+                            <select id="hypo-objective" class="w-full bg-black/30 border border-cyan-500/30 rounded-md p-2 text-white">
+                                ${this.MOCK_DATA.hypotheses.objectives.map(o => `<option value="${o.id}">${o.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <button id="run-hypo-sim" class="custom-btn w-full p-2 mt-4 rounded-md font-bold">RUN SIMULATION</button>
+                    <div id="hypothesis-result" class="mt-4 flex-grow glass-panel p-4 hidden"></div>
+                </div>
+            `;
+        }
+
+        setupHypothesisLabControls() {
+            const stressorSelect = document.getElementById('hypo-stressor');
+            const objectiveSelect = document.getElementById('hypo-objective');
+            const runBtn = document.getElementById('run-hypo-sim');
+            const resultContainer = document.getElementById('hypothesis-result');
+
+            runBtn.addEventListener('click', () => {
+                const stressorId = stressorSelect.value;
+                const objectiveId = objectiveSelect.value;
+                const result = this.MOCK_DATA.hypotheses.outcomes[`${stressorId}_${objectiveId}`];
+                
+                if (result) {
+                    const impactColor = result.impact > 0 ? 'text-green-400 success-text' : 'text-red-400 danger-text';
+                    const impactText = result.impact > 0 ? `+${result.impact}%` : `${result.impact}%`;
+                    
+                    resultContainer.innerHTML = `
+                        <h4 class="font-orbitron text-lg">Generated Hypothesis:</h4>
+                        <p class="italic text-cyan-300">"${result.hypothesis}"</p>
+                        <h4 class="font-orbitron text-lg mt-4">Simulated Outcome:</h4>
+                        <p>${result.outcome}</p>
+                        <div class="text-center mt-4">
+                            <p class="text-sm text-gray-400">Projected Impact on Objective:</p>
+                            <p class="font-orbitron text-5xl ${impactColor}">${impactText}</p>
+                        </div>
+                    `;
+                    resultContainer.classList.remove('hidden');
+                    this.addLogEntry(`Hypothesis Simulation Complete for ${stressorId}/${objectiveId}.`, 'success');
+                } else {
+                     resultContainer.innerHTML = `<p class="text-yellow-400">No specific interaction model found for this combination. Defaulting to general stress response.</p>`;
+                     resultContainer.classList.remove('hidden');
+                }
+            });
+        }
+        
+        getECLSSHTML() {
+            return `
+                <div class="h-full grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="h-48"><canvas id="o2-chart"></canvas></div>
+                    <div class="h-48"><canvas id="water-chart"></canvas></div>
+                    <div class="h-48"><canvas id="biomass-chart"></canvas></div>
+                    <div class="h-48"><canvas id="power-chart"></canvas></div>
+                </div>
+            `;
+        }
+        
+        renderECLSSCharts() {
+            const generateTimeData = (points, initial, variance) => {
+                let data = []; let value = initial;
+                for(let i=0; i<points; i++) {
+                    data.push({x: Date.now() - (points-i)*60000, y: value});
+                    value += (Math.random() - 0.5) * variance;
+                }
+                return data;
+            };
+
+            const baseChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { type: 'time', time: { unit: 'minute' }, ticks: { color: '#9ab1d7' } }, y: { ticks: { color: '#9ab1d7' }, grid: { color: 'rgba(0,255,255,0.1)' } } } };
+            
+            new Chart('o2-chart', { type: 'line', data: { datasets: [{ data: generateTimeData(60, 20.9, 0.1), borderColor: '#00ffff' }] }, options: {...baseChartOptions, plugins: {...baseChartOptions.plugins, title: { display: true, text: 'O₂ Level (%)', color: '#e0e6f1' }}} });
+            new Chart('water-chart', { type: 'line', data: { datasets: [{ data: generateTimeData(60, 95, 2), borderColor: '#87cefa' }] }, options: {...baseChartOptions, plugins: {...baseChartOptions.plugins, title: { display: true, text: 'Water Recycled (%)', color: '#e0e6f1' }}} });
+            new Chart('biomass-chart', { type: 'line', data: { datasets: [{ data: generateTimeData(60, 5, 0.5), borderColor: '#90ee90' }] }, options: {...baseChartOptions, plugins: {...baseChartOptions.plugins, title: { display: true, text: 'Biomass Processed (kg/hr)', color: '#e0e6f1' }}} });
+            new Chart('power-chart', { type: 'line', data: { datasets: [{ data: generateTimeData(60, 2.5, 0.3), borderColor: '#ffd700' }] }, options: {...baseChartOptions, plugins: {...baseChartOptions.plugins, title: { display: true, text: 'Power Consumption (kW)', color: '#e0e6f1' }}} });
+        }
+        
+        renderPhenologyChart(phenologyData) {
+            const ctx = document.getElementById('phenology-chart').getContext('2d');
+            let data = Object.values(phenologyData);
+            if(this.state.activeEvent && this.state.activeEvent.effects.phenology_stress){
+                data = data.map(d => d * this.state.activeEvent.effects.phenology_stress);
+            }
+            if (this.state.activeChart) this.state.activeChart.destroy();
+            this.state.activeChart = new Chart(ctx, { type: 'radar', data: { labels: ['Photosynthetic Rate', 'Nutrient Uptake', 'Transpiration', 'Pathogen Resistance', 'Structural Integrity'], datasets: [{ label: 'Phenological Status', data: data, backgroundColor: 'rgba(0, 255, 128, 0.2)', borderColor: 'rgba(0, 255, 128, 0.7)', }] }, options: { scales: { r: { min: 0, max: 1, grid: { color: 'rgba(0, 255, 255, 0.2)' }, pointLabels: { color: '#e0e6f1' } } }, plugins: { legend: { display: false } } } });
+        }
+        
+        renderMilpaVisualizer(module) {
+            const svg = this.dom.milpaSVG; svg.innerHTML = '';
+            const positions = { maize: { x: 150, y: 80 }, beans: { x: 80, y: 200 }, squash: { x: 220, y: 200 } };
+            const links = [ { source: 'maize', target: 'beans', label: 'Structure', y_offset: -10 }, { source: 'beans', target: 'maize', label: 'N₂ Fixation', y_offset: 10 }, { source: 'squash', target: 'maize', label: 'Weed Suppression', y_offset: 10 } ];
+            links.forEach(link => { const sourcePos = positions[link.source]; const targetPos = positions[link.target]; const line = document.createElementNS('http://www.w3.org/2000/svg', 'path'); const d = `M ${sourcePos.x} ${sourcePos.y} Q ${(sourcePos.x + targetPos.x)/2} ${(sourcePos.y + targetPos.y)/2 + link.y_offset * 10} ${targetPos.x} ${targetPos.y}`; line.setAttribute('d', d); line.setAttribute('stroke', 'rgba(0, 255, 255, 0.3)'); line.setAttribute('stroke-width', '2'); line.setAttribute('fill', 'none'); svg.appendChild(line); });
+            Object.keys(positions).forEach(cropId => {
+                const pos = positions[cropId]; const cropDetails = this.MOCK_DATA.crop_details[cropId]; const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.classList.add('milpa-node');
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); circle.setAttribute('cx', pos.x); circle.setAttribute('cy', pos.y); circle.setAttribute('r', '30'); circle.setAttribute('fill', cropDetails.color.replace('0.7', '0.5')); circle.setAttribute('stroke', cropDetails.color); circle.setAttribute('stroke-width', '2'); g.appendChild(circle);
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text'); text.textContent = cropDetails.name; text.setAttribute('x', pos.x); text.setAttribute('y', pos.y + 5); text.setAttribute('fill', 'white'); text.setAttribute('font-size', '12'); text.setAttribute('font-weight', 'bold'); text.setAttribute('text-anchor', 'middle'); g.appendChild(text);
+                
+                g.addEventListener('mousemove', (e) => {
+                    this.dom.milpaTooltip.style.display = 'block';
+                    this.dom.milpaTooltip.style.left = `${e.clientX + 15}px`;
+                    this.dom.milpaTooltip.style.top = `${e.clientY + 15}px`;
+                    const health = (module.phenology.pr * 100).toFixed(0);
+                    this.dom.milpaTooltip.innerHTML = `<strong>${cropDetails.name}</strong><br>Health: ${health}%<br>Stage: Flowering`;
+                });
+                g.addEventListener('mouseout', () => { this.dom.milpaTooltip.style.display = 'none'; });
+
+                svg.appendChild(g);
+            });
+        }
+        
+        updateMissionStatus() {
+            const module = this.state.activeModule;
+            const biomass = module.total_biomass * (this.state.activeEvent?.effects.yield_modifier || 1);
+            const calories = biomass * 2500;
+            const foodDays = Math.floor(calories / (2800 * 4));
+
+            let alertHTML = '';
+            if (this.state.activeEvent) {
+                alertHTML = `
+                    <div id="alert-box" class="mt-4 p-3 border border-red-500/50 bg-red-900/30 rounded-lg alert-active">
+                        <h4 class="font-bold text-red-400 flex items-center gap-2"><i data-lucide="alert-triangle"></i>ACTIVE MISSION ALERT</h4>
+                        <p class="text-red-300">${this.state.activeEvent.name}</p>
+                    </div>
+                `;
+            }
+
+            this.dom.missionStatusPanel.innerHTML = `
+                 <div class="text-center">
+                     <h3 class="text-lg text-gray-400">Total Estimated Biomass</h3>
+                     <p class="font-orbitron text-5xl my-1 success-text">${biomass.toFixed(1)} <span class="text-2xl">kg</span></p>
+                 </div>
+                 <div class="text-center">
+                     <h3 class="text-lg text-gray-400">Mission Food Security</h3>
+                     <p class="font-orbitron text-5xl my-1 text-cyan-300">${foodDays} <span class="text-2xl">days</span></p>
+                     <p class="text-sm text-gray-500">Estimated caloric autonomy for 4 crew members</p>
+                 </div>
+                 ${alertHTML}
+            `;
+            if (this.state.activeEvent) {
+                lucide.createIcons({nodes: [this.dom.missionStatusPanel.querySelector('i')]});
+            }
+        }
+
+        startEventSimulator() {
+            if(this.eventInterval) clearInterval(this.eventInterval);
+            this.eventInterval = setInterval(() => {
+                if(Math.random() < 0.15) {
+                    if (!this.state.activeEvent) this.triggerRandomEvent();
+                } else if (this.state.activeEvent) {
+                    this.clearEvent();
+                }
+            }, 10000);
+        }
+
+        triggerRandomEvent() {
+            const event = this.MOCK_DATA.events[Math.floor(Math.random() * this.MOCK_DATA.events.length)];
+            this.state.activeEvent = event;
+            this.addLogEntry(`MISSION EVENT: ${event.name}`, 'danger');
+            this.updateMissionStatus();
+            if (this.dom.displayPanel.updateSimulation) this.dom.displayPanel.updateSimulation();
+        }
+        
+        clearEvent() {
+            this.addLogEntry(`Event "${this.state.activeEvent.name}" has been resolved.`, 'success');
+            this.state.activeEvent = null;
+            this.updateMissionStatus();
+            if (this.dom.displayPanel.updateSimulation) this.dom.displayPanel.updateSimulation();
+        }
+
+        renderYieldChart(data, cropName, color) {
+            const canvas = document.getElementById('yield-chart');
+            if (!canvas) return; // FIX: Prevent error if chart is not in DOM
+            const ctx = canvas.getContext('2d');
+            if (this.state.activeChart) this.state.activeChart.destroy();
+            this.state.activeChart = new Chart(ctx, { type: 'line', data: { labels: ['Week 1-4', 'Week 5-8', 'Week 9-12', 'Week 13-16 (Harvest)'], datasets: [{ label: `Predicted Biomass (kg/m²) for ${cropName}`, data: data, borderColor: color, backgroundColor: color.replace('0.7', '0.2'), fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }
+        
+        getMockData() {
+            return {
+                modules: [ { id: 'MAH-D1', name: 'Agri-Dome 1', location: 'Mars Habitat Alpha', cycle_day: 42, total_biomass: 152.4, crops: { maize: {}, beans: {}, squash: {} }, phenology: { pr: 0.9, nu: 0.85, tr: 0.7, pr: 0.95, si: 0.9 } }, { id: 'SES-GB', name: 'Green Bay', location: 'Stellaris Orbital Station', cycle_day: 89, total_biomass: 98.2, crops: { maize: {}, beans: {}, squash: {} }, phenology: { pr: 0.8, nu: 0.9, tr: 0.8, pr: 0.85, si: 0.88 } } ],
+                crop_details: {
+                    maize: { name: 'AstroMaize-V', yield: [1.2, 2.5, 4.0, 5.5], color: 'rgba(255, 215, 0, 0.7)'},
+                    beans: { name: 'Phaseolus-IX', yield: [0.8, 1.8, 2.8, 3.5], color: 'rgba(50, 205, 50, 0.7)'},
+                    squash: { name: 'Cucurbita-Nova', yield: [1.0, 2.2, 3.5, 4.2], color: 'rgba(255, 100, 0, 0.7)'}
+                },
+                archetypes: [ { id: 'OPT', name: 'Optimal Yield Protocol', yield_modifier: 1.0 }, { id: 'CON', name: 'Energy Conservation Protocol', yield_modifier: 0.7 }, { id: 'FLR', name: 'Solar Flare Recovery (Low Light)', yield_modifier: 0.5 }, { id: 'PAT', name: 'Pathogen Contamination Alert', yield_modifier: 0.3 } ],
+                events: [
+                    { id: 'SOLAR_FLARE', name: 'Solar Flare Detected', effects: { yield_modifier: 0.6, phenology_stress: 0.7 } },
+                    { id: 'PUMP_FAIL', name: 'Nutrient Pump Failure', effects: { yield_modifier: 0.4, phenology_stress: 0.5 } },
+                    { id: 'PATHOGEN', name: 'Pathogen Outbreak Detected', effects: { yield_modifier: 0.2, phenology_stress: 0.4 } }
+                ],
+                hypotheses: {
+                    stressors: [
+                        {id: "LIGHT", name: "Reduced Light Spectrum"},
+                        {id: "NUTRIENT", name: "Nutrient Imbalance"},
+                        {id: "CO2", name: "Elevated CO2 Levels"}
+                    ],
+                    objectives: [
+                        {id: "BIOMASS", name: "Maximize Biomass"},
+                        {id: "WATER", name: "Conserve Water"},
+                        {id: "O2", name: "Maximize O2 Production"}
+                    ],
+                    outcomes: {
+                        "LIGHT_BIOMASS": { hypothesis: "If the blue light spectrum is reduced, then overall biomass accumulation in AstroMaize-V will decrease due to lower photosynthetic efficiency.", outcome: "Simulation confirms a significant drop in late-stage biomass. The model predicts a failure to meet caloric goals if this condition persists.", impact: -28 },
+                        "LIGHT_WATER": { hypothesis: "If light intensity is decreased, then plant transpiration rates will fall, leading to a net conservation of water resources.", outcome: "The model shows a marked decrease in water cycling via the ECLSS. While biomass is reduced, water reserves increase.", impact: 15 },
+                        "NUTRIENT_BIOMASS": { hypothesis: "If nitrogen levels are reduced by 15%, then Phaseolus-IX (Beans) will be less affected than AstroMaize-V due to their nitrogen-fixing capabilities.", outcome: "Simulation confirms the hypothesis. Maize yield drops significantly while bean yield remains stable, validating the symbiotic model's resilience.", impact: -18 },
+                        "CO2_O2": { hypothesis: "If CO2 levels are increased to 1200 ppm, then the net O2 production from all crops will increase proportionally.", outcome: "ECLSS models predict a substantial rise in atmospheric O2, but also flag a potential for nutrient depletion due to accelerated growth.", impact: 22 }
+                    }
+                }
+            };
+        }
+    }
+    </script>
+</body>
+</html>
+
