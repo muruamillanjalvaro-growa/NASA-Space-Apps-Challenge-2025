@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Urban Planning Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5); /* slate-800 with opacity */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700 with opacity */
+            border-radius: 0.75rem;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #94a3b8; /* slate-400 */
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link:hover {
+            background-color: #1e293b; /* slate-800 */
+            color: #f8fafc; /* slate-50 */
+        }
+        .nav-link.active {
+            background-color: #3730a3; /* indigo-800 */
+            color: #e0e7ff; /* indigo-100 */
+            font-weight: 600;
+        }
+        .score-gauge-fg {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .analysis-panel {
+            display: none;
+        }
+        .analysis-panel.active {
+            display: grid;
+        }
+        .radar-chart-polygon {
+            transition: all 0.4s ease-in-out;
+        }
+        .flood-water {
+            transition: height 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- SIDE NAVIGATION -->
+    <aside class="w-64 bg-slate-900/80 p-4 border-r border-slate-800 flex flex-col flex-shrink-0">
+        <h1 class="text-xl font-bold text-white px-2 mb-6">Urban Planner AI</h1>
+        <nav class="flex flex-col space-y-2">
+            <a href="#" id="nav-greenspace" class="nav-link active">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Greenspace Equity
+            </a>
+            <a href="#" id="nav-habitat" class="nav-link">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.832 14H6.168a2 2 0 00-1.996 1.858L5 18h8l.028-2.142A2 2 0 0011.832 14H10.168"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.252A4.498 4.498 0 0116.5 10.5v2.256A4.5 4.5 0 0112 17.252 4.5 4.5 0 017.5 12.756V10.5A4.498 4.498 0 0112 6.252z"></path></svg>
+                Habitat Impact
+            </a>
+            <a href="#" id="nav-suitability" class="nav-link">
+                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 4h5m-5 4h5m-5-4h.01M9 7h.01M13 7h.01M13 11h.01M13 15h.01M13 19h.01"></path></svg>
+                Industrial Suitability
+            </a>
+            <a href="#" id="nav-flood" class="nav-link">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                Flood Vulnerability
+            </a>
+        </nav>
+        <div class="mt-auto p-4 bg-slate-800/50 rounded-lg text-center text-slate-400">
+            <p class="font-bold text-white">NASA Space Apps Challenge</p>
+            <p class="text-xs mt-1">Decision support tool powered by Earth observation data.</p>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-6 overflow-y-auto">
+
+        <!-- Greenspace Equity Analysis Panel -->
+        <div id="panel-greenspace" class="analysis-panel active w-full max-w-7xl grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Content from previous version -->
+            <div class="glass-card p-6 lg:col-span-2">
+                <h2 class="text-2xl font-bold text-white">Greenspace Equity Analysis</h2>
+                <p class="text-slate-400 mb-6">Pinpoint neighborhoods with a high need for local parks.</p>
+                <div class="space-y-5">
+                    <div class="p-4 bg-indigo-900/30 border border-indigo-700 rounded-lg">
+                        <p class="text-sm text-indigo-200"><b>Key Question:</b> Which communities need better access to local parks?</p>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">1. Environmental & Climatic Factors</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="gs_temp" class="flex justify-between text-sm font-medium text-slate-400">Avg. Max Temperature <span id="gs_temp-val" class="font-bold text-white">32°C</span></label>
+                                <input type="range" id="gs_temp" min="20" max="45" value="32" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Source logic: <b class="font-mono">T2M_MAX</b>. Heat increases the need for parks.</span>
+                            </div>
+                            <div>
+                                <label for="gs_impermeable" class="flex justify-between text-sm font-medium text-slate-400">Impervious Surface <span id="gs_impermeable-val" class="font-bold text-white">60%</span></label>
+                                <input type="range" id="gs_impermeable" min="0" max="100" value="60" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Source logic: Inverse of <b class="font-mono">GWETTOP</b>. Sealed soil needs parks for water absorption.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">2. Urban & Social Factors</h3>
+                         <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="gs_pop" class="flex justify-between text-sm font-medium text-slate-400">Population Density <span id="gs_pop-val" class="font-bold text-white">70%</span></label>
+                                <input type="range" id="gs_pop" min="0" max="100" value="70" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Higher density increases the need for recreational space.</span>
+                            </div>
+                            <div>
+                                <label for="gs_green" class="flex justify-between text-sm font-medium text-slate-400">Existing Green Coverage <span id="gs_green-val" class="font-bold text-white">15%</span></label>
+                                <input type="range" id="gs_green" min="0" max="100" value="15" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">The most direct factor for greenspace deficit.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="calculateGreenspaceBtn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg">
+                        Calculate Priority Score
+                    </button>
+                </div>
+            </div>
+            <div id="greenspace-results" class="glass-card p-6 lg:col-span-3">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-white mb-1">Greenspace Priority Report</h2>
+                    <p class="text-slate-400 mb-6">Need index for the creation of new parks and green areas.</p>
+                    <div class="relative inline-flex items-center justify-center my-4">
+                        <svg class="w-48 h-48"><circle class="stroke-slate-700" cx="50%" cy="50%" r="80" stroke-width="12" fill="transparent"></circle><circle id="gs_progress" class="score-gauge-fg" cx="50%" cy="50%" r="80" stroke-width="12" stroke-dasharray="502.4" stroke-dashoffset="502.4" stroke-linecap="round"></circle></svg>
+                        <div class="absolute text-center">
+                            <span id="gs_score" class="text-5xl font-bold text-white">0</span>
+                            <p class="text-slate-300">Priority Score</p>
+                        </div>
+                    </div>
+                    <p id="gs-summary" class="text-xl font-medium mt-4 text-white">Priority Level: <span class="font-bold">...</span></p>
+                </div>
+                <div class="border-t border-slate-700 pt-5 mt-6">
+                    <h3 class="text-xl font-bold text-white mb-3">Strategic Recommendations</h3>
+                    <ul id="gs_recommendations" class="space-y-3 text-slate-300">
+                         <li>Adjust parameters to generate an analysis and see recommended actions.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Habitat Impact Analysis Panel -->
+        <div id="panel-habitat" class="analysis-panel w-full max-w-7xl grid-cols-1 lg:grid-cols-5 gap-6">
+             <div class="glass-card p-6 lg:col-span-2">
+                <h2 class="text-2xl font-bold text-white">Industrial Impact on Habitats</h2>
+                <p class="text-slate-400 mb-6">Assess the risk of industrial growth on natural ecosystems.</p>
+                <div class="space-y-5">
+                    <div class="p-4 bg-purple-900/30 border border-purple-700 rounded-lg">
+                         <p class="text-sm text-purple-200"><b>Key Question:</b> How are local freshwater, coastal, or forest habitats affected by industrial growth?</p>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">1. Industrial Pressure Factors</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="hi_pressure" class="flex justify-between text-sm font-medium text-slate-400">Industrial Pressure <span id="hi_pressure-val" class="font-bold text-white">65%</span></label>
+                                <input type="range" id="hi_pressure" min="0" max="100" value="65" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Source logic: <b class="font-mono">RETC_Normalizado</b>. Proximity and intensity of industry.</span>
+                            </div>
+                             <div>
+                                <label for="hi_landuse" class="flex justify-between text-sm font-medium text-slate-400">Land Use Change Rate <span id="hi_landuse-val" class="font-bold text-white">40%</span></label>
+                                <input type="range" id="hi_landuse" min="0" max="100" value="40" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Source logic: <b class="font-mono">Deforestacion_Normalizado</b>. Rate of natural land conversion.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">2. Ecosystem Condition</h3>
+                         <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="hi_vulnerability" class="flex justify-between text-sm font-medium text-slate-400">Habitat Vulnerability <span id="hi_vulnerability-val" class="font-bold text-white">70%</span></label>
+                                <input type="range" id="hi_vulnerability" min="0" max="100" value="70" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <span class="text-xs text-slate-500">Source logic: Inverse of <b class="font-mono">Acuiferos/Cobertura_Forestal</b>.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="calculateHabitatBtn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors shadow-lg">
+                        Calculate Impact Score
+                    </button>
+                </div>
+            </div>
+            <div id="habitat-results" class="glass-card p-6 lg:col-span-3">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-white mb-1">Habitat Impact Report</h2>
+                    <p class="text-slate-400 mb-6">Overall risk score from industrial activity.</p>
+                    <div class="relative inline-flex items-center justify-center my-4">
+                        <svg class="w-48 h-48"><circle class="stroke-slate-700" cx="50%" cy="50%" r="80" stroke-width="12" fill="transparent"></circle><circle id="hi_progress" class="score-gauge-fg" cx="50%" cy="50%" r="80" stroke-width="12" stroke-dasharray="502.4" stroke-dashoffset="502.4" stroke-linecap="round"></circle></svg>
+                        <div class="absolute text-center">
+                            <span id="hi_score" class="text-5xl font-bold text-white">0</span>
+                            <p class="text-slate-300">Impact Score</p>
+                        </div>
+                    </div>
+                    <p id="hi-summary" class="text-xl font-medium mt-4 text-white">Impact Level: <span class="font-bold">...</span></p>
+                </div>
+                <div class="border-t border-slate-700 pt-5 mt-6">
+                    <h3 class="text-xl font-bold text-white mb-3">Strategic Recommendations</h3>
+                    <ul id="hi_recommendations" class="space-y-3 text-slate-300">
+                         <li>Adjust parameters to generate an analysis and see recommended actions.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Industrial Suitability Analysis Panel -->
+        <div id="panel-suitability" class="analysis-panel w-full max-w-7xl grid-cols-1 lg:grid-cols-5 gap-6">
+             <div class="glass-card p-6 lg:col-span-2">
+                <h2 class="text-2xl font-bold text-white">Industrial Suitability Analysis</h2>
+                <p class="text-slate-400 mb-6">Identify zones with high potential for sustainable industrial growth.</p>
+                <div class="space-y-4">
+                     <div class="p-4 bg-cyan-900/30 border border-cyan-700 rounded-lg">
+                         <p class="text-sm text-cyan-200"><b>Key Question:</b> How to evaluate an area's capacity for industrial and infrastructure growth?</p>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">1. Environmental Resilience</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="is_health" class="flex justify-between text-sm font-medium text-slate-400">Habitat Health <span id="is_health-val" class="font-bold text-white">80%</span></label>
+                                <input type="range" id="is_health" min="0" max="100" value="80" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="is_dispersion" class="flex justify-between text-sm font-medium text-slate-400">Air Dispersion Potential <span id="is_dispersion-val" class="font-bold text-white">60%</span></label>
+                                <input type="range" id="is_dispersion" min="0" max="100" value="60" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">2. Infrastructure Readiness</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                             <div>
+                                <label for="is_water" class="flex justify-between text-sm font-medium text-slate-400">Water Resource Access <span id="is_water-val" class="font-bold text-white">75%</span></label>
+                                <input type="range" id="is_water" min="0" max="100" value="75" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                             <div>
+                                <label for="is_logistics" class="flex justify-between text-sm font-medium text-slate-400">Logistic Connectivity <span id="is_logistics-val" class="font-bold text-white">50%</span></label>
+                                <input type="range" id="is_logistics" min="0" max="100" value="50" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">3. Development Factors</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="is_land" class="flex justify-between text-sm font-medium text-slate-400">Available Land <span id="is_land-val" class="font-bold text-white">40%</span></label>
+                                <input type="range" id="is_land" min="0" max="100" value="40" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    <button id="calculateSuitabilityBtn" class="w-full bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-cyan-700 transition-colors shadow-lg mt-2">
+                        Calculate Suitability Score
+                    </button>
+                </div>
+            </div>
+            <div id="suitability-results" class="glass-card p-6 lg:col-span-3">
+                <div class="flex flex-col h-full">
+                    <h2 class="text-2xl font-bold text-white mb-1">Industrial Suitability Report</h2>
+                    <p class="text-slate-400 mb-4">A balanced score of environmental, infrastructural, and developmental factors.</p>
+                    <div class="flex-grow grid grid-cols-2 gap-4 items-center">
+                        <div class="relative w-full h-full flex items-center justify-center">
+                            <svg id="radar-chart" class="w-full h-full" viewBox="0 0 200 200"></svg>
+                            <div class="absolute text-center">
+                                <span id="is_score" class="text-5xl font-bold text-white">0</span>
+                                <p class="text-slate-300">Suitability Score</p>
+                            </div>
+                        </div>
+                        <div id="is-summary-factors" class="text-sm">
+                            <!-- Factor breakdown here -->
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-700 pt-4 mt-4">
+                        <h3 class="text-xl font-bold text-white mb-3">Strategic Recommendations</h3>
+                        <ul id="is_recommendations" class="space-y-2 text-slate-300 text-sm">
+                            <li>Adjust parameters to generate an analysis.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flood Vulnerability Analysis Panel -->
+        <div id="panel-flood" class="analysis-panel w-full max-w-7xl grid-cols-1 lg:grid-cols-5 gap-6">
+            <div class="glass-card p-6 lg:col-span-2">
+                <h2 class="text-2xl font-bold text-white">Flood Vulnerability Analysis</h2>
+                <p class="text-slate-400 mb-6">Assess neighborhood vulnerability to extreme rainfall events.</p>
+                <div class="space-y-4">
+                     <div class="p-4 bg-blue-900/30 border border-blue-700 rounded-lg">
+                         <p class="text-sm text-blue-200"><b>Key Question:</b> Which areas are most vulnerable to flooding?</p>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">1. Meteorological Factors</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                            <div>
+                                <label for="fv_rain" class="flex justify-between text-sm font-medium text-slate-400">Intense Precipitation Risk <span id="fv_rain-val" class="font-bold text-white">70%</span></label>
+                                <input type="range" id="fv_rain" min="0" max="100" value="70" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="fv_soil" class="flex justify-between text-sm font-medium text-slate-400">Soil Saturation <span id="fv_soil-val" class="font-bold text-white">80%</span></label>
+                                <input type="range" id="fv_soil" min="0" max="100" value="80" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                     <div>
+                        <h3 class="text-base font-semibold text-slate-300 mb-2">2. Urban Factors</h3>
+                        <div class="space-y-4 pl-2 border-l-2 border-slate-700">
+                             <div>
+                                <label for="fv_surface" class="flex justify-between text-sm font-medium text-slate-400">Impervious Surface <span id="fv_surface-val" class="font-bold text-white">85%</span></label>
+                                <input type="range" id="fv_surface" min="0" max="100" value="85" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                             <div>
+                                <label for="fv_drainage" class="flex justify-between text-sm font-medium text-slate-400">Drainage Capacity <span id="fv_drainage-val" class="font-bold text-white">30%</span></label>
+                                <input type="range" id="fv_drainage" min="0" max="100" value="30" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                    <button id="calculateFloodBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-lg mt-4">
+                        Calculate Vulnerability Score
+                    </button>
+                </div>
+            </div>
+            <div id="flood-results" class="glass-card p-6 lg:col-span-3">
+                <div class="flex flex-col h-full">
+                    <h2 class="text-2xl font-bold text-white mb-1">Flood Vulnerability Report</h2>
+                    <p class="text-slate-400 mb-4">A composite score based on environmental and urban factors.</p>
+                    <div class="flex-grow flex flex-col items-center justify-center bg-slate-900/50 rounded-lg p-4 relative overflow-hidden">
+                        <div id="flood-viz" class="w-full h-full flex flex-col justify-end">
+                             <div id="flood-water-level" class="flood-water w-full bg-blue-500/50 border-t-2 border-blue-300" style="height: 0%;"></div>
+                        </div>
+                        <div class="absolute text-center">
+                            <span id="fv_score" class="text-6xl font-bold text-white">0</span>
+                            <p class="text-slate-300">Vulnerability Score</p>
+                            <p id="fv-summary" class="text-xl font-medium mt-2 text-white"><span class="font-bold">...</span></p>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-700 pt-4 mt-4">
+                        <h3 class="text-xl font-bold text-white mb-3">Strategic Recommendations</h3>
+                        <ul id="fv_recommendations" class="space-y-2 text-slate-300 text-sm">
+                            <li>Adjust parameters to generate an analysis.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Navigation Logic ---
+        const navLinks = {
+            greenspace: document.getElementById('nav-greenspace'),
+            habitat: document.getElementById('nav-habitat'),
+            suitability: document.getElementById('nav-suitability'),
+            flood: document.getElementById('nav-flood'),
+        };
+        const panels = {
+            greenspace: document.getElementById('panel-greenspace'),
+            habitat: document.getElementById('panel-habitat'),
+            suitability: document.getElementById('panel-suitability'),
+            flood: document.getElementById('panel-flood'),
+        };
+
+        Object.keys(navLinks).forEach(key => {
+            navLinks[key].addEventListener('click', (e) => {
+                e.preventDefault();
+                Object.values(navLinks).forEach(link => link.classList.remove('active'));
+                Object.values(panels).forEach(panel => panel.classList.remove('active'));
+                navLinks[key].classList.add('active');
+                panels[key].classList.add('active');
+            });
+        });
+        
+        // --- Greenspace Equity Calculator ---
+        const gsSliders = { temp: document.getElementById('gs_temp'), impermeable: document.getElementById('gs_impermeable'), pop: document.getElementById('gs_pop'), green: document.getElementById('gs_green'), };
+        const gsValues = { temp: document.getElementById('gs_temp-val'), impermeable: document.getElementById('gs_impermeable-val'), pop: document.getElementById('gs_pop-val'), green: document.getElementById('gs_green-val'), };
+        const calculateGreenspaceBtn = document.getElementById('calculateGreenspaceBtn');
+        const gsScoreEl = document.getElementById('gs_score');
+        const gsProgress = document.getElementById('gs_progress');
+        const gsSummary = document.getElementById('gs-summary');
+        const gsRecommendations = document.getElementById('gs_recommendations');
+        for (const key in gsSliders) { gsSliders[key].addEventListener('input', (e) => { const unit = key === 'temp' ? '°C' : '%'; gsValues[key].textContent = `${e.target.value}${unit}`; }); }
+        calculateGreenspaceBtn.addEventListener('click', () => { const factors = { temp: (parseFloat(gsSliders.temp.value) - 20) / (45 - 20), impermeable: parseFloat(gsSliders.impermeable.value) / 100, pop: parseFloat(gsSliders.pop.value) / 100, green: 1 - (parseFloat(gsSliders.green.value) / 100) }; let gsScore = (factors.green * 0.4) + (factors.pop * 0.3) + (factors.temp * 0.2) + (factors.impermeable * 0.1); const finalScore = Math.min(Math.round(gsScore * 100), 100); updateGreenspaceUI(finalScore); });
+        function updateGreenspaceUI(score) { gsScoreEl.textContent = score; let color = 'stroke-green-500', profile = 'Low'; if (score > 70) { color = 'stroke-red-500'; profile = 'Critical'; } else if (score > 45) { color = 'stroke-yellow-500'; profile = 'High'; } else if (score > 20) { color = 'stroke-indigo-500'; profile = 'Moderate'; } gsProgress.setAttribute('class', `score-gauge-fg ${color}`); const circumference = 2 * Math.PI * 80; gsProgress.style.strokeDashoffset = circumference - (score / 100) * circumference; gsSummary.querySelector('span').textContent = profile; gsRecommendations.innerHTML = ''; const recommendations = []; if (score > 70) { recommendations.push(`<li><b>Urgent Intervention:</b> Identify and acquire land for "pocket parks". <b>Reason:</b> The neighborhood faces a critical greenspace deficit combined with high density and heat stress.</li>`); recommendations.push(`<li><b>Tactical Green Infrastructure:</b> Implement "green street" and green roof programs to mitigate the urban heat island effect immediately.</li>`); } else if (score > 45) { recommendations.push(`<li><b>Strategic Planning:</b> Amend zoning codes to require a percentage of green area in all new developments. <b>Reason:</b> A high need exists that will worsen without proactive policy.</li>`); recommendations.push(`<li><b>Space Conversion:</b> Conduct a census of vacant or underutilized public lots for conversion into community parks or gardens.</li>`); } else if (score > 20) { recommendations.push(`<li><b>Enhancement & Connection:</b> Invest in improving existing parks (lighting, furniture, playgrounds) and create green corridors to connect them. <b>Reason:</b> The need is moderate; focus should be on maximizing the use and quality of existing assets.</li>`); } else { recommendations.push(`<li><b>Conservation & Monitoring:</b> Priority is low. The focus should be on protecting current greenspaces through conservation policies and monitoring urban development to prevent future deficits.</li>`); } gsRecommendations.innerHTML = recommendations.join(''); }
+
+        // --- Habitat Impact Calculator ---
+        const hiSliders = { pressure: document.getElementById('hi_pressure'), landuse: document.getElementById('hi_landuse'), vulnerability: document.getElementById('hi_vulnerability'), };
+        const hiValues = { pressure: document.getElementById('hi_pressure-val'), landuse: document.getElementById('hi_landuse-val'), vulnerability: document.getElementById('hi_vulnerability-val'), };
+        const calculateHabitatBtn = document.getElementById('calculateHabitatBtn');
+        const hiScoreEl = document.getElementById('hi_score');
+        const hiProgress = document.getElementById('hi_progress');
+        const hiSummary = document.getElementById('hi-summary');
+        const hiRecommendations = document.getElementById('hi_recommendations');
+        for (const key in hiSliders) { hiSliders[key].addEventListener('input', (e) => { hiValues[key].textContent = `${e.target.value}%`; }); }
+        calculateHabitatBtn.addEventListener('click', () => { const factors = { pressure: parseFloat(hiSliders.pressure.value) / 100, landuse: parseFloat(hiSliders.landuse.value) / 100, vulnerability: parseFloat(hiSliders.vulnerability.value) / 100, }; let hiScore = (factors.pressure * 0.5) + (factors.landuse * 0.3) + (factors.vulnerability * 0.2); const finalScore = Math.min(Math.round(hiScore * 100), 100); updateHabitatUI(finalScore); });
+        function updateHabitatUI(score) { hiScoreEl.textContent = score; let color = 'stroke-green-500', profile = 'Low'; if (score > 70) { color = 'stroke-red-500'; profile = 'Severe'; } else if (score > 45) { color = 'stroke-yellow-500'; profile = 'High'; } else if (score > 20) { color = 'stroke-purple-500'; profile = 'Moderate'; } hiProgress.setAttribute('class', `score-gauge-fg ${color}`); const circumference = 2 * Math.PI * 80; hiProgress.style.strokeDashoffset = circumference - (score / 100) * circumference; hiSummary.querySelector('span').textContent = profile; hiRecommendations.innerHTML = ''; const recommendations = []; if (score > 70) { recommendations.push(`<li><b>Critical Action Required:</b> Implement an immediate moratorium on new industrial permits in this zone. <b>Reason:</b> Extreme industrial pressure on a highly vulnerable ecosystem presents a severe risk of irreversible damage.</li>`); recommendations.push(`<li><b>Enhanced Monitoring:</b> Deploy water and soil quality sensors (e.g., using NASA's OCSSP data) for real-time monitoring of pollutant levels.</li>`); } else if (score > 45) { recommendations.push(`<li><b>Protective Zoning:</b> Establish mandatory "buffer zones" around sensitive habitats where industrial activity is restricted. <b>Reason:</b> The combination of high pressure and land use change poses a significant threat to habitat integrity.</li>`); recommendations.push(`<li><b>Incentivize Green Industry:</b> Offer tax incentives for local industries that adopt zero-discharge water policies and invest in habitat restoration.</li>`); } else if (score > 20) { recommendations.push(`<li><b>Policy Review:</b> Strengthen environmental impact assessment (EIA) standards for all new industrial projects. <b>Reason:</b> Moderate impact indicates that current regulations may not be sufficient to prevent future degradation.</li>`); } else { recommendations.push(`<li><b>Conservation Easements:</b> Work with landowners to establish conservation easements that protect the healthy habitat from future development. <b>Reason:</b> The impact is low, making it a prime opportunity for proactive conservation.</li>`); } hiRecommendations.innerHTML = recommendations.join(''); }
+
+        // --- Industrial Suitability Calculator ---
+        const isSliders = { health: document.getElementById('is_health'), dispersion: document.getElementById('is_dispersion'), water: document.getElementById('is_water'), logistics: document.getElementById('is_logistics'), land: document.getElementById('is_land') };
+        const isValues = { health: document.getElementById('is_health-val'), dispersion: document.getElementById('is_dispersion-val'), water: document.getElementById('is_water-val'), logistics: document.getElementById('is_logistics-val'), land: document.getElementById('is_land-val') };
+        const calculateSuitabilityBtn = document.getElementById('calculateSuitabilityBtn');
+        const isScoreEl = document.getElementById('is_score');
+        const radarChartEl = document.getElementById('radar-chart');
+        const isRecommendationsEl = document.getElementById('is_recommendations');
+        const isSummaryFactorsEl = document.getElementById('is-summary-factors');
+        for (const key in isSliders) { isSliders[key].addEventListener('input', (e) => { isValues[key].textContent = `${e.target.value}%`; }); }
+        calculateSuitabilityBtn.addEventListener('click', () => { const factors = { health: parseFloat(isSliders.health.value) / 100, dispersion: parseFloat(isSliders.dispersion.value) / 100, water: parseFloat(isSliders.water.value) / 100, logistics: parseFloat(isSliders.logistics.value) / 100, land: parseFloat(isSliders.land.value) / 100 }; let isScore = (factors.health * 0.3) + (factors.water * 0.2) + (factors.logistics * 0.2) + (factors.dispersion * 0.15) + (factors.land * 0.15); const finalScore = Math.min(Math.round(isScore * 100), 100); updateSuitabilityUI(finalScore, factors); });
+        function updateSuitabilityUI(score, factors) { isScoreEl.textContent = score; drawRadarChart(factors); isSummaryFactorsEl.innerHTML = ` <p class="flex justify-between">Env. Resilience: <span class="font-bold text-white">${Math.round((factors.health + factors.dispersion) / 2 * 100)}</span></p> <p class="flex justify-between">Infrastructure: <span class="font-bold text-white">${Math.round((factors.water + factors.logistics) / 2 * 100)}</span></p> <p class="flex justify-between">Development: <span class="font-bold text-white">${Math.round(factors.land * 100)}</span></p> `; isRecommendationsEl.innerHTML = ''; const recommendations = []; if (score < 40) { recommendations.push(`<li><b>Not Recommended for Industry:</b> Focus on ecological restoration or low-impact residential use. <b>Reason:</b> The area has critical weaknesses in environmental resilience and/or infrastructure.</li>`); } else { if (factors.health < 0.5) recommendations.push(`<li><b>Constraint: Low Habitat Health.</b> Restrict development to light industry with strict environmental controls. Mandate habitat restoration as part of any permit.</li>`); if (factors.logistics < 0.5) recommendations.push(`<li><b>Constraint: Poor Logistics.</b> Prioritize public investment in transport infrastructure (roads, rail) before zoning for heavy industry.</li>`); if (factors.water < 0.5) recommendations.push(`<li><b>Constraint: Water Stress.</b> Only permit industries with closed-loop water systems or very low water consumption.</li>`); } if (recommendations.length === 0) { recommendations.push(`<li><b>High Suitability:</b> The area is well-suited for a variety of industrial uses. Develop a master plan to attract high-value, sustainable industries.</li>`); } isRecommendationsEl.innerHTML = recommendations.join(''); }
+        function drawRadarChart(factors) { const size = 100; const center = 100; const points = []; const labels = ['Habitat Health', 'Air Dispersion', 'Water Access', 'Logistics', 'Available Land']; const factorKeys = ['health', 'dispersion', 'water', 'logistics', 'land']; let chartContent = `<g transform="translate(${center},${center})">`; for(let i = 1; i <= 4; i++) { const radius = (size / 4) * i; chartContent += `<path d="${getPentagonPath(radius)}" stroke="#334155" fill="none" stroke-width="0.5"/>`; } for(let i = 0; i < 5; i++) { const angle = (i * 2 * Math.PI / 5) - (Math.PI / 2); const x = size * Math.cos(angle); const y = size * Math.sin(angle); chartContent += `<line x1="0" y1="0" x2="${x}" y2="${y}" stroke="#475569" stroke-width="0.5"/>`; const labelX = (size + 15) * Math.cos(angle); const labelY = (size + 15) * Math.sin(angle); chartContent += `<text x="${labelX}" y="${labelY}" fill="#94a3b8" font-size="8" text-anchor="middle" dominant-baseline="middle">${labels[i]}</text>`; } factorKeys.forEach((key, i) => { const value = factors[key]; const angle = (i * 2 * Math.PI / 5) - (Math.PI / 2); const x = size * value * Math.cos(angle); const y = size * value * Math.sin(angle); points.push(`${x},${y}`); }); chartContent += `<polygon class="radar-chart-polygon" points="${points.join(' ')}" fill="rgba(56, 189, 248, 0.4)" stroke="#0ea5e9" stroke-width="2"/>`; chartContent += `</g>`; radarChartEl.innerHTML = chartContent; }
+        function getPentagonPath(radius) { let path = 'M'; for(let i = 0; i < 5; i++) { const angle = (i * 2 * Math.PI / 5) - (Math.PI / 2); const x = radius * Math.cos(angle); const y = radius * Math.sin(angle); path += ` ${x} ${y} L`; } return path.slice(0, -2) + ' Z'; }
+
+        // --- Flood Vulnerability Calculator ---
+        const fvSliders = { rain: document.getElementById('fv_rain'), soil: document.getElementById('fv_soil'), surface: document.getElementById('fv_surface'), drainage: document.getElementById('fv_drainage') };
+        const fvValues = { rain: document.getElementById('fv_rain-val'), soil: document.getElementById('fv_soil-val'), surface: document.getElementById('fv_surface-val'), drainage: document.getElementById('fv_drainage-val') };
+        const calculateFloodBtn = document.getElementById('calculateFloodBtn');
+        const fvScoreEl = document.getElementById('fv_score');
+        const fvWaterLevel = document.getElementById('flood-water-level');
+        const fvSummary = document.getElementById('fv-summary');
+        const fvRecommendations = document.getElementById('fv_recommendations');
+
+        for (const key in fvSliders) { fvSliders[key].addEventListener('input', (e) => { fvValues[key].textContent = `${e.target.value}%`; }); }
+        calculateFloodBtn.addEventListener('click', () => {
+            const factors = {
+                rain: parseFloat(fvSliders.rain.value) / 100,
+                soil: parseFloat(fvSliders.soil.value) / 100,
+                surface: parseFloat(fvSliders.surface.value) / 100,
+                drainage: 1 - (parseFloat(fvSliders.drainage.value) / 100) // Inverted: low capacity is bad
+            };
+            let fvScore = (factors.rain * 0.3) + (factors.surface * 0.3) + (factors.drainage * 0.25) + (factors.soil * 0.15);
+            const finalScore = Math.min(Math.round(fvScore * 100), 100);
+            updateFloodUI(finalScore);
+        });
+
+        function updateFloodUI(score) {
+            fvScoreEl.textContent = score;
+            fvWaterLevel.style.height = `${score}%`;
+
+            let colorClass = 'bg-blue-500/50 border-blue-300';
+            let profile = 'Low';
+            if (score > 75) { colorClass = 'bg-red-500/50 border-red-300'; profile = 'Extreme'; }
+            else if (score > 50) { colorClass = 'bg-yellow-500/50 border-yellow-300'; profile = 'High'; }
+            else if (score > 25) { colorClass = 'bg-cyan-500/50 border-cyan-300'; profile = 'Moderate'; }
+            fvWaterLevel.setAttribute('class', `flood-water w-full ${colorClass} border-t-2`);
+            
+            fvSummary.querySelector('span').textContent = profile;
+
+            fvRecommendations.innerHTML = '';
+            const recommendations = [];
+            if (score > 75) {
+                recommendations.push(`<li><b>Immediate Alert:</b> The combination of factors indicates an extreme and immediate flood risk. Evacuation protocols may be necessary.</li>`);
+                recommendations.push(`<li><b>Emergency Infrastructure:</b> Deploy temporary flood barriers in critical low-lying areas and ensure emergency drainage pumps are operational.</li>`);
+            } else if (score > 50) {
+                recommendations.push(`<li><b>High Priority Action:</b> Commission an urgent engineering study to upgrade the drainage system capacity. <b>Reason:</b> The infrastructure is a critical point of failure under current environmental pressures.</li>`);
+                recommendations.push(`<li><b>Permeable Surfaces Mandate:</b> Require permeable pavements and green infrastructure in all new public and private construction projects.</li>`);
+            } else if (score > 25) {
+                recommendations.push(`<li><b>Preventative Measures:</b> Launch a public awareness campaign on keeping storm drains clear of debris. <b>Reason:</b> Maintaining existing infrastructure is key to managing moderate risk.</li>`);
+                recommendations.push(`<li><b>Green Solutions:</b> Develop plans for bioswales and rain gardens in public spaces to increase natural water absorption.</li>`);
+            } else {
+                recommendations.push(`<li><b>Monitoring and Maintenance:</b> The risk is low. Focus on regular maintenance of the existing drainage system and monitor changes in rainfall patterns.</li>`);
+            }
+            fvRecommendations.innerHTML = recommendations.join('');
+        }
+
+
+        // Initialize all panels on load
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateGreenspaceBtn.click();
+            calculateHabitatBtn.click();
+            calculateSuitabilityBtn.click();
+            calculateFloodBtn.click();
+        });
+        
+    </script>
+</body>
+</html>
+
