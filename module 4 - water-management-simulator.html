@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaPlanner Pro: Water Resilience Module</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #eaf4f7;
+            --card-bg: #ffffff;
+            --text-color: #1a2c3f;
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --warning-color: #f1c40f;
+            --danger-color: #e74c3c;
+            --shadow-light: 0 6px 18px rgba(0, 0, 0, 0.08);
+            --border-radius: 16px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 3rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 950px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            animation: fadeIn 1.2s ease-out;
+        }
+
+        .header {
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+
+        .main-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            padding: 3rem;
+            animation: slideInUp 1s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 0.75rem;
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        .variable-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .variable-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.5rem;
+            background-color: var(--bg-color);
+            border-radius: var(--border-radius);
+            border: 1px solid #c7e0e9;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .variable-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .variable-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .variable-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--danger-color);
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            border-radius: 4px;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid var(--card-bg);
+            transition: transform 0.2s ease;
+        }
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .result-container {
+            text-align: center;
+            margin-top: 3rem;
+        }
+        .result-container h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+        }
+
+        .stress-score {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        .stress-level {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .stress-low { color: var(--success-color); }
+        .stress-medium { color: var(--warning-color); }
+        .stress-high { color: var(--danger-color); }
+
+        .analysis-section, .actions-section {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        .analysis-section h4, .actions-list h4 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .analysis-section ul, .actions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .analysis-section li, .actions-list li {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .analysis-section li:hover, .actions-list li:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .analysis-section li strong {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>AquaPlanner Pro: Water Resilience Module 💧</h1>
+            <p>Aquifer Stress Analysis for Sustainable Water Resource Management</p>
+        </div>
+
+        <div class="main-card">
+            <h2 class="section-title">Climatic Stress Parameters</h2>
+            <p style="margin-top: -1rem; color: #555;">Adjust the parameters to assess the stress level in aquifers. The results update in real-time.</p>
+
+            <div class="variable-group">
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Maximum Temperature (T2M_MAX)</span>
+                        <span id="temp-value" class="variable-value">25°C</span>
+                    </div>
+                    <input type="range" min="0" max="45" value="25" class="slider" id="temp-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">Heat is the main "villain". High temperatures accelerate water loss through evaporation.</p>
+                </div>
+                
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Soil Moisture (GWETTOP)</span>
+                        <span id="humidity-value" class="variable-value">50%</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="50" class="slider" id="humidity-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">Dry soil prevents water from filtering down to recharge aquifers. It's the "guardian" of the recharge process.</p>
+                </div>
+
+                <div class="variable-item">
+                    <div class="variable-label">
+                        <span>Precipitation (PRECTOTCORR)</span>
+                        <span id="precipitation-value" class="variable-value">0 mm</span>
+                    </div>
+                    <input type="range" min="0" max="100" value="0" class="slider" id="precipitation-slider">
+                    <p style="font-size: 0.9rem; color: #7f8c8d;">Rain mitigates stress, but it is not the primary recharge factor according to our model.</p>
+                </div>
+            </div>
+
+            <div class="result-container">
+                <h3>Aquifer Stress Level</h3>
+                <p id="stress-level" class="stress-score stress-low">Low</p>
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h2 class="section-title">Model Rule Analysis</h2>
+            <p>This index quantifies the synergistic effect of multiple stressors. The data shows that aquifer stress is not explained by the amount of rainfall, but by the <strong>amount of water it manages to retain</strong> against heat and evaporation.</p>
+            <ul>
+                <li>
+                    <strong>T2M_MAX: The Main Villain.</strong> The most important variable for water stress is the maximum temperature. Intense heat causes significant water loss through evaporation before it can infiltrate and recharge the aquifers.
+                </li>
+                <li>
+                    <strong>GWETTOP: The Guardian of Recharge.</strong> The second most important variable is soil moisture. If the topsoil is dry, there is no water available to percolate down to the aquifer, acting as a "guardian" that prevents recharge.
+                </li>
+                 <li>
+                    <strong>PRECTOTCORR: The Mitigator.</strong> Precipitation variables were not as relevant in the model. However, in practice, rain mitigates stress by providing water. The tool considers this variable with a lower weight, reflecting its secondary role in the recharge system.
+                </li>
+            </ul>
+        </div>
+        
+        <div class="actions-section" id="actions-section">
+            <h2 class="section-title">Recommended Actions</h2>
+            <ul class="actions-list">
+                </ul>
+        </div>
+    </div>
+
+    <script>
+        const tempSlider = document.getElementById('temp-slider');
+        const humiditySlider = document.getElementById('humidity-slider');
+        const precipitationSlider = document.getElementById('precipitation-slider');
+        
+        const tempValue = document.getElementById('temp-value');
+        const humidityValue = document.getElementById('humidity-value');
+        const precipitationValue = document.getElementById('precipitation-value');
+
+        const stressLevel = document.getElementById('stress-level');
+        const actionsList = document.querySelector('.actions-list');
+
+        function updateStressAndActions() {
+            const temp = parseInt(tempSlider.value);
+            const humidity = parseInt(humiditySlider.value);
+            const precipitation = parseInt(precipitationSlider.value);
+
+            let stressScore = 0;
+            let actions = [];
+
+            // Stress rules and actions based on the model's logic
+            // Precipitation subtracts stress points, but does not completely nullify them
+            stressScore += Math.max(0, (temp > 30 ? 2 : (temp > 25 ? 1 : 0)) + (humidity < 30 ? 2 : (humidity < 50 ? 1 : 0)) - (precipitation > 50 ? 1 : 0));
+
+            // Map the score to a stress level
+            let level = "Low";
+            let colorClass = "stress-low";
+            if (stressScore >= 3) {
+                level = "High";
+                colorClass = "stress-high";
+            } else if (stressScore >= 1) {
+                level = "Medium";
+                colorClass = "stress-medium";
+            }
+            
+            stressLevel.textContent = level;
+            stressLevel.className = `stress-score ${colorClass}`;
+            
+            // Dynamic action generation
+            actionsList.innerHTML = '';
+            if (level === "Low") {
+                actionsList.innerHTML = '<li><h4>Optimal Conditions</h4><p>Aquifer stress is low. Maintain sustainable water management and monitor climatic conditions.</p></li>';
+            } else {
+                if (temp > 25) {
+                    actions.push({
+                        title: "Risk from High Temperature",
+                        description: "Implement urban cooling solutions such as green roofs, reflective surfaces, and increased vegetation to reduce evaporation."
+                    });
+                }
+                if (humidity < 50) {
+                    actions.push({
+                        title: "Risk from Dry Soil",
+                        description: "Promote the use of permeable surfaces to increase water infiltration into the subsoil and improve the recharge capacity of aquifers."
+                    });
+                }
+                if (precipitation < 20) {
+                    actions.push({
+                        title: "Risk from Low Precipitation",
+                        description: "Consider developing infrastructure for rainwater harvesting and storage in key areas."
+                    });
+                }
+                actions.forEach(action => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<h4>${action.title}</h4><p>${action.description}</p>`;
+                    actionsList.appendChild(li);
+                });
+            }
+        }
+
+        tempSlider.oninput = function() {
+            tempValue.textContent = this.value + "°C";
+            updateStressAndActions();
+        }
+
+        humiditySlider.oninput = function() {
+            humidityValue.textContent = this.value + "%";
+            updateStressAndActions();
+        }
+
+        precipitationSlider.oninput = function() {
+            precipitationValue.textContent = this.value + " mm";
+            updateStressAndActions();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', updateStressAndActions);
+    </script>
+</body>
+</html>
