@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Risk Assessment Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* A lighter, professional background */
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 24px; height: 24px;
+            background: #2563eb; /* blue-600 */
+            cursor: pointer; border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 24px; height: 24px;
+            background: #2563eb; cursor: pointer; border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .score-gauge-bg {
+            stroke: #e5e7eb; /* gray-200 */
+        }
+        .score-gauge-fg {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <main class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <!-- INPUT PANEL -->
+        <div class="card p-6 lg:col-span-2">
+            <h1 class="text-2xl font-bold text-gray-800">Risk Assessment Input</h1>
+            <p class="text-gray-500 mb-6">Enter observed parameters for a specific neighborhood.</p>
+
+            <div class="space-y-5">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">1. Environmental & Climatic Parameters</h3>
+                    <div class="space-y-4 pl-2 border-l-2 border-gray-200">
+                        <div>
+                            <label for="temp" class="flex justify-between text-sm font-medium text-gray-600">Avg. Max Temperature <span id="temp-val" class="font-bold">32°C</span></label>
+                            <input type="range" id="temp" min="20" max="45" value="32" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span class="text-xs text-gray-500">Key for Water Stress & Heat. (Source: <b class="font-mono">T2M_MAX</b>)</span>
+                        </div>
+                        <div>
+                            <label for="wind" class="flex justify-between text-sm font-medium text-gray-600">Natural Ventilation <span id="wind-val" class="font-bold">50%</span></label>
+                            <input type="range" id="wind" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span class="text-xs text-gray-500">Key for pollutant dispersal. (Source: <b class="font-mono">WS10M</b>)</span>
+                        </div>
+                        <div>
+                            <label for="soil" class="flex justify-between text-sm font-medium text-gray-600">Soil Moisture <span id="soil-val" class="font-bold">40%</span></label>
+                            <input type="range" id="soil" min="0" max="100" value="40" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span class="text-xs text-gray-500">Key for Air & Water risk. (Source: <b class="font-mono">GWETTOP</b>)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-base font-semibold text-gray-700 mb-2">2. Urban Infrastructure Parameters</h3>
+                     <div class="space-y-4 pl-2 border-l-2 border-gray-200">
+                        <div>
+                            <label for="industry" class="flex justify-between text-sm font-medium text-gray-600">Industrial / Traffic Density <span id="industry-val" class="font-bold">60%</span></label>
+                            <input type="range" id="industry" min="0" max="100" value="60" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span class="text-xs text-gray-500">Increases air pollution risk.</span>
+                        </div>
+                        <div>
+                            <label for="green" class="flex justify-between text-sm font-medium text-gray-600">Green Space Coverage <span id="green-val" class="font-bold">20%</span></label>
+                            <input type="range" id="green" min="0" max="100" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <span class="text-xs text-gray-500">Mitigates heat and improves air quality.</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="calculateBtn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg">
+                    Generate Risk Assessment
+                </button>
+            </div>
+        </div>
+
+        <!-- RESULTS DASHBOARD -->
+        <div id="resultsPanel" class="card p-6 lg:col-span-3 bg-gray-800 text-white hidden">
+            <h2 class="text-2xl font-bold mb-1">Neighborhood Assessment Report</h2>
+            <p id="risk-summary" class="text-gray-400 mb-6">Overall risk profile: <span class="font-bold">...</span></p>
+
+            <!-- Score Gauges -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center mb-6">
+                <div id="air-score-card">
+                    <h4 class="font-semibold text-gray-300">Air Quality</h4>
+                    <div class="relative inline-flex items-center justify-center">
+                        <svg class="w-24 h-24"><circle class="score-gauge-bg" cx="50%" cy="50%" r="40" stroke-width="8"></circle><circle id="air-progress" class="score-gauge-fg" cx="50%" cy="50%" r="40" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle></svg>
+                        <span id="air-score" class="absolute text-2xl font-bold">0</span>
+                    </div>
+                </div>
+                <div id="water-score-card">
+                    <h4 class="font-semibold text-gray-300">Water Stress</h4>
+                    <div class="relative inline-flex items-center justify-center">
+                        <svg class="w-24 h-24"><circle class="score-gauge-bg" cx="50%" cy="50%" r="40" stroke-width="8"></circle><circle id="water-progress" class="score-gauge-fg" cx="50%" cy="50%" r="40" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle></svg>
+                        <span id="water-score" class="absolute text-2xl font-bold">0</span>
+                    </div>
+                </div>
+                <div id="heat-score-card">
+                    <h4 class="font-semibold text-gray-300">Heat Island</h4>
+                    <div class="relative inline-flex items-center justify-center">
+                        <svg class="w-24 h-24"><circle class="score-gauge-bg" cx="50%" cy="50%" r="40" stroke-width="8"></circle><circle id="heat-progress" class="score-gauge-fg" cx="50%" cy="50%" r="40" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle></svg>
+                        <span id="heat-score" class="absolute text-2xl font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis & Recommendations -->
+            <div class="border-t border-gray-700 pt-5">
+                <h3 class="text-xl font-bold mb-2">Key Risk Drivers</h3>
+                <div id="risk-drivers" class="flex flex-wrap gap-2 mb-4"></div>
+                
+                <h3 class="text-xl font-bold mb-3">Strategic Recommendations</h3>
+                <ul id="recommendations" class="space-y-3 text-gray-300"></ul>
+            </div>
+        </div>
+        
+        <div id="welcomePanel" class="card p-6 lg:col-span-3 bg-gray-800 text-white flex flex-col justify-center">
+            <h2 class="text-3xl font-bold mb-2">Welcome, Urban Planner</h2>
+            <p class="text-gray-300 mb-6">This tool leverages predictive logic from NASA Earth observation data to score environmental risks at a neighborhood level.</p>
+            <div class="mt-4 border-t border-gray-700 pt-6">
+                <h3 class="text-xl font-bold mb-4">How it works:</h3>
+                <ol class="list-decimal list-inside space-y-3 text-gray-300">
+                    <li><b>Input Data:</b> Use the sliders on the left panel to input observed values for the neighborhood you are analyzing.</li>
+                    <li><b>Generate Score:</b> Press the button to process the data through the model's logic.</li>
+                    <li><b>Analyze & Act:</b> This panel will display risk scores and a prioritized list of data-driven actions to mitigate those risks.</li>
+                </ol>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const sliders = {
+            temp: document.getElementById('temp'),
+            wind: document.getElementById('wind'),
+            soil: document.getElementById('soil'),
+            industry: document.getElementById('industry'),
+            green: document.getElementById('green')
+        };
+        const values = {
+            temp: document.getElementById('temp-val'),
+            wind: document.getElementById('wind-val'),
+            soil: document.getElementById('soil-val'),
+            industry: document.getElementById('industry-val'),
+            green: document.getElementById('green-val')
+        };
+        const calculateBtn = document.getElementById('calculateBtn');
+        const welcomePanel = document.getElementById('welcomePanel');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const riskSummary = document.getElementById('risk-summary');
+        const riskDriversEl = document.getElementById('risk-drivers');
+        const recommendationsEl = document.getElementById('recommendations');
+
+        const scoreCards = {
+            air: { score: document.getElementById('air-score'), progress: document.getElementById('air-progress') },
+            water: { score: document.getElementById('water-score'), progress: document.getElementById('water-progress') },
+            heat: { score: document.getElementById('heat-score'), progress: document.getElementById('heat-progress') }
+        };
+
+        // Live update slider values
+        for (const key in sliders) {
+            sliders[key].addEventListener('input', (e) => {
+                const unit = key === 'temp' ? '°C' : '%';
+                values[key].textContent = `${e.target.value}${unit}`;
+            });
+        }
+        
+        calculateBtn.addEventListener('click', () => {
+            const inputs = {
+                temp: parseFloat(sliders.temp.value),
+                wind: parseFloat(sliders.wind.value),
+                soil: parseFloat(sliders.soil.value),
+                industry: parseFloat(sliders.industry.value),
+                green: parseFloat(sliders.green.value)
+            };
+
+            const factors = {
+                temp: (inputs.temp - 20) / (45 - 20), // High temp = bad
+                wind: 1 - (inputs.wind / 100),       // Low wind = bad
+                soil: 1 - (inputs.soil / 100),       // Dry soil = bad
+                industry: inputs.industry / 100,     // High industry = bad
+                green: 1 - (inputs.green / 100)      // Low green space = bad
+            };
+
+            // **Air Quality Score Logic** (Weights based on model variable importance)
+            let airScore = (factors.wind * 0.4) + (factors.industry * 0.3) + (factors.soil * 0.2) + (factors.green * 0.1);
+            
+            // **Water Stress Score Logic**
+            let waterScore = (factors.temp * 0.5) + (factors.soil * 0.3) + (factors.green * 0.2);
+
+            // **Urban Heat Island Score Logic**
+            let heatScore = (factors.temp * 0.6) + (factors.green * 0.4);
+
+            const scores = {
+                air: Math.min(Math.round(airScore * 100), 100),
+                water: Math.min(Math.round(waterScore * 100), 100),
+                heat: Math.min(Math.round(heatScore * 100), 100)
+            };
+            
+            updateUI(scores, factors);
+        });
+
+        function updateUI(scores, factors) {
+            welcomePanel.classList.add('hidden');
+            resultsPanel.classList.remove('hidden');
+
+            updateScoreCard(scoreCards.air, scores.air);
+            updateScoreCard(scoreCards.water, scores.water);
+            updateScoreCard(scoreCards.heat, scores.heat);
+
+            const totalScore = (scores.air + scores.water + scores.heat) / 3;
+            let riskProfile = "Low";
+            if (totalScore > 70) riskProfile = "Critical";
+            else if (totalScore > 45) riskProfile = "High";
+            else if (totalScore > 20) riskProfile = "Moderate";
+            riskSummary.querySelector('span').textContent = riskProfile;
+            
+            generateAnalysis(scores, factors);
+        }
+
+        function updateScoreCard(card, score) {
+            card.score.textContent = score;
+            let color = 'stroke-green-500';
+            if (score > 70) color = 'stroke-red-500';
+            else if (score > 45) color = 'stroke-yellow-500';
+            
+            card.progress.setAttribute('class', `score-gauge-fg ${color}`);
+            const circumference = 2 * Math.PI * 40;
+            const offset = circumference - (score / 100) * circumference;
+            card.progress.style.strokeDashoffset = offset;
+        }
+
+        function generateAnalysis(scores, factors) {
+            // Key Risk Drivers
+            riskDriversEl.innerHTML = '';
+            const driverFactors = [
+                { name: 'Low Ventilation', value: factors.wind, threshold: 0.6 },
+                { name: 'High Temp', value: factors.temp, threshold: 0.6 },
+                { name: 'Dry Soil', value: factors.soil, threshold: 0.6 },
+                { name: 'High Industry/Traffic', value: factors.industry, threshold: 0.6 },
+                { name: 'Lack of Green Space', value: factors.green, threshold: 0.6 }
+            ];
+            const activeDrivers = driverFactors.filter(d => d.value > d.threshold);
+            if (activeDrivers.length > 0) {
+                activeDrivers.forEach(d => {
+                    riskDriversEl.innerHTML += `<span class="bg-red-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">${d.name}</span>`;
+                });
+            } else {
+                 riskDriversEl.innerHTML += `<span class="bg-green-500 text-white text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full">No Critical Drivers</span>`;
+            }
+
+            // Strategic Recommendations
+            recommendationsEl.innerHTML = '';
+            const recommendations = [];
+            
+            if (scores.heat > 70) {
+                 recommendations.push(`<li><b>Critical Heat Mitigation:</b> Prioritize cool pavement programs and expand tree canopy. <b>Why:</b> Extremely low green space and high temperatures are creating a severe heat island effect.</li>`);
+            }
+            if (scores.air > 70) {
+                recommendations.push(`<li><b>Urgent Air Quality Action:</b> Deploy mobile air quality sensors to pinpoint pollution hotspots. <b>Why:</b> A combination of high industrial density and poor ventilation is likely trapping pollutants.</li>`);
+            }
+            if (scores.water > 70) {
+                 recommendations.push(`<li><b>Critical Water Management:</b> Mandate rainwater harvesting systems (SCALL) for new developments. <b>Why:</b> High temperatures and dry soil indicate severe aquifer stress and low recharge rates.</li>`);
+            }
+
+            if (scores.heat > 45 && scores.heat <= 70) {
+                recommendations.push(`<li><b>Proactive Heat Reduction:</b> Develop an urban forestry master plan and incentivize green roofs. <b>Why:</b> The neighborhood is at high risk of developing a stronger heat island effect.</li>`);
+            }
+            if (scores.air > 45 && scores.air <= 70) {
+                recommendations.push(`<li><b>Proactive Air Quality Plan:</b> Establish low-emission zones for heavy traffic and promote green buffer zones. <b>Why:</b> Current conditions suggest a significant risk of exceeding air quality standards.</li>`);
+            }
+            if (scores.water > 45 && scores.water <= 70) {
+                 recommendations.push(`<li><b>Proactive Water Conservation:</b> Fund public campaigns on water-wise landscaping and conduct a water-loss audit on public infrastructure. <b>Why:</b> The area shows signs of high water stress that could become critical.</li>`);
+            }
+
+
+            if (recommendations.length === 0) {
+                recommendations.push('<li><b>Low Risk Profile:</b> Focus on preserving current green spaces and maintaining high standards for new urban development. The current environmental state is healthy.</li>');
+            }
+            
+            recommendationsEl.innerHTML = recommendations.join('');
+        }
+    </script>
+</body>
+</html>
+
